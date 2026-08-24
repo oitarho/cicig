@@ -387,7 +387,7 @@ def create_client():
         created = [client for client in clients_for(service) if str(client.get("id")) not in old_ids]
         if created:
             save_client_meta(service, str(created[0]["id"]), expires_at, request.form.get("note", "").strip()[:200])
-        flash(f"Клиент «{name}» создан в {SERVICES[service]['title']}", "success")
+        flash(f"Ключ для «{name}» ушёл в прод. Касса мурчит, туннель шифруется!", "sale")
     except requests.RequestException as exc:
         flash(f"Не удалось создать клиента: {exc}", "error")
     return redirect(url_for("index") + "#clients")
@@ -403,11 +403,11 @@ def client_action(service: str, client_id: str, action: str):
     try:
         if action in {"enable", "disable"}:
             api_call(service, "POST", f"/wireguard/client/{client_id}/{action}")
-            flash("Состояние клиента изменено", "success")
+            flash("Рубильник дёрнут: состояние доступа изменено", "success")
         elif action == "delete":
             api_call(service, "DELETE", f"/wireguard/client/{client_id}")
             delete_client_meta(service, client_id)
-            flash("Клиент удалён", "success")
+            flash("Следы заметены: клиент удалён", "success")
         else:
             return "Неизвестное действие", 404
     except requests.RequestException as exc:

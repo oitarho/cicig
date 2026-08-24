@@ -4,5 +4,5 @@
 <body><main class="login"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="cicig">
 <p class="terminal-line">root@cicig:~$ authorize<span class="cursor">_</span></p><h1>cicig_</h1><p>Закрытый контур управления WireGuard и AmneziaWG</p>
 {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
-<form method="post"><label>Пароль администратора<input type="password" name="password" required autofocus></label><button>Войти</button></form>
+<form method="post"><label>Мастер-пароль от кошачьего сейфа<input type="password" name="password" required autofocus></label><button>Войти в матрицу</button></form>
 </main></body></html>

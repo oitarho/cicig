@@ -7,11 +7,12 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='sale.css') }}">
 </head>
 <body>
 <header>
   <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"><div><strong>cicig_</strong><span>root console // VPN</span></div></a>
-  <nav><a href="#clients">Клиенты</a><a href="#systems">Системы</a><a href="#updates">Обновления</a></nav>
+  <nav><a href="#clients">Ключи</a><a href="#systems">Узлы</a><a href="#updates">Патчи</a></nav>
   <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Выйти</button></form>
 </header>
 
@@ -21,9 +22,9 @@
     <div class="metrics"><div><strong>{{ total_clients }}</strong><span>всего клиентов</span></div><div><strong>{{ enabled_clients }}</strong><span>активны</span></div><div><strong>2</strong><span>VPN-сервиса</span></div></div>
   </section>
 
-  {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}{% if category == 'sale' %}<div class="sale-toast" role="status"><button type="button" class="sale-close" onclick="this.parentElement.remove()" aria-label="Закрыть">×</button><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"><div><span>ACCESS GRANTED // PROFIT +1</span><strong>{{ message }}</strong><small>Ещё один человек ушёл в зашифрованный тоннель 😼</small></div></div>{% else %}<div class="notice {{ category }}">{{ message }}</div>{% endif %}{% endfor %}
 
-  <section id="clients" class="section-head"><div><p class="eyebrow">Доступы</p><h2>VPN-клиенты</h2></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Новый клиент</button></section>
+  <section id="clients" class="section-head"><div><p class="eyebrow">/vault/keys</p><h2>База VPN-доступов</h2></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Выпустить ключ</button></section>
 
   <form class="filters" method="get" action="{{ url_for('index') }}#clients">
     <input class="search" type="search" name="q" value="{{ query }}" placeholder="Имя, IP или публичный ключ…">
@@ -57,12 +58,12 @@
         </article>
         {% endfor %}
       </div>
-      {% else %}<div class="empty">Пока нет клиентов. Нажмите «Новый клиент», чтобы создать первый доступ.</div>{% endif %}
+      {% else %}<div class="empty">Хранилище пусто. Выпустите первый ключ — коту нужны монеты.</div>{% endif %}
     </section>
   {% endfor %}
   </div>
 
-  <section id="systems" class="section-head"><div><p class="eyebrow">Инфраструктура</p><h2>Состояние сервисов</h2></div></section>
+  <section id="systems" class="section-head"><div><p class="eyebrow">/proc/cicig</p><h2>Пульс VPN-узлов</h2></div></section>
   <section class="grid">
   {% for card in cards %}
     <article class="card">
@@ -72,7 +73,7 @@
   {% endfor %}
   </section>
 
-  <section id="updates" class="settings"><div><p class="eyebrow">Автоматизация</p><h2>Обновление всей системы</h2><p>cicig загружает актуальный код из GitHub, обновляет панель, Caddy, WireGuard и AmneziaWG, затем пересобирает и перезапускает систему. Домены, пароль, VPN-ключи и клиенты сохраняются.</p>{% if update.result %}<p class="result">{{ update.result }}{% if update.updated_at %}<br><small>{{ update.updated_at }}</small>{% endif %}</p>{% endif %}</div>
+  <section id="updates" class="settings"><div><p class="eyebrow">git pull &amp;&amp; deploy</p><h2>Залить свежий патч</h2><p>cicig забирает свежий код из GitHub, патчит панель, Caddy, WireGuard и AmneziaWG, затем мягко перезапускает весь узел. Домены, пароль, VPN-ключи и клиенты остаются в сейфе.</p>{% if update.result %}<p class="result">{{ update.result }}{% if update.updated_at %}<br><small>{{ update.updated_at }}</small>{% endif %}</p>{% endif %}</div>
     <form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
       <label class="check"><input type="checkbox" name="auto_update" {% if settings.auto_update %}checked{% endif %}> Обновлять всю систему автоматически</label>
       <label>Проверять каждые, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button>
@@ -84,13 +85,13 @@
 <dialog id="create-client">
   <form method="post" action="{{ url_for('create_client') }}">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">
-    <div class="dialog-head"><div><p class="eyebrow">Новый доступ</p><h2>Создать VPN-клиента</h2></div><button type="button" class="close" onclick="this.closest('dialog').close()">×</button></div>
+    <div class="dialog-head"><div><p class="eyebrow">keygen --new</p><h2>Выпустить VPN-ключ</h2></div><button type="button" class="close" onclick="this.closest('dialog').close()">×</button></div>
     <label>VPN-сервис<select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
     <label>Имя клиента<input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
     <label>Срок доступа<select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
     <label>Заметка<input name="note" maxlength="200" placeholder="Телефон, владелец или комментарий"></label>
     <p class="hint">После создания скачайте конфигурацию или откройте QR-код в списке клиентов.</p>
-    <button class="wide">Создать клиента</button>
+    <button class="wide">Сгенерировать и продать 😼</button>
   </form>
 </dialog>
 </body>
