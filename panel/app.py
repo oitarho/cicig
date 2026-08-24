@@ -95,7 +95,7 @@ def parse_datetime(value) -> datetime | None:
 
 
 def human_date(value: datetime | None) -> str:
-    return value.astimezone().strftime("%d.%m.%Y") if value else "Без срока"
+    return value.astimezone().strftime("%d.%m.%Y") if value else "вечный доступ"
 
 
 def load_settings() -> dict:
@@ -130,13 +130,13 @@ def service_status(name: str) -> dict:
     )
     container_id = result.stdout.strip()
     if not container_id:
-        return {"state": "не найден", "image": "неизвестен", "health": "нет данных", "healthy": False}
+        return {"state": "пропал с радаров", "image": "неизвестен", "health": "датчик молчит", "restarts": "0", "healthy": False}
     inspected = docker(
         "inspect", "--format", "{{.State.Status}}|{{.Config.Image}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}|{{.RestartCount}}", container_id
     )
     state, image, health, restarts = (inspected.stdout.strip().split("|") + ["", "", "", "0"])[:4]
-    states = {"running": "работает", "created": "создан", "exited": "остановлен", "restarting": "перезапускается", "paused": "приостановлен"}
-    health_states = {"healthy": "исправен", "unhealthy": "ошибка", "starting": "запускается", "none": "не настроена"}
+    states = {"running": "в сети", "created": "готовится к вылазке", "exited": "ушёл в офлайн", "restarting": "зациклился в матрице", "paused": "заморожен"}
+    health_states = {"healthy": "мурчит", "unhealthy": "дымится", "starting": "прогревает лапы", "none": "датчик не подключён"}
     return {"state": states.get(state, state), "image": image, "health": health_states.get(health, health), "restarts": restarts or "0", "healthy": state == "running" and health not in {"unhealthy"}}
 
 
@@ -257,7 +257,7 @@ def perform_update() -> None:
         try:
             running = docker("ps", "-q", "--filter", "name=^/cicig-updater$")
             if running.stdout.strip():
-                raise RuntimeError("обновление уже выполняется")
+                raise RuntimeError("кот уже тащит свежий патч")
             launched = docker(
                 "run", "--detach", "--rm", "--name", "cicig-updater",
                 "-v", "/var/run/docker.sock:/var/run/docker.sock",
@@ -267,7 +267,7 @@ def perform_update() -> None:
             )
             if launched.returncode != 0:
                 raise RuntimeError((launched.stderr or launched.stdout)[-1200:])
-            update_state["result"] = "Обновление всей системы запущено. Панель перезапустится автоматически."
+            update_state["result"] = "Кот утащил свежий код в нору. Узел сам перезапустится через пару секунд."
         except Exception as exc:  # noqa: BLE001
             update_state["result"] = f"Ошибка: {exc}"
         finally:
@@ -330,7 +330,7 @@ def login():
             session["authenticated"] = True
             session["csrf"] = secrets.token_urlsafe(32)
             return redirect(url_for("index"))
-        flash("Неверный пароль", "error")
+        flash("Доступ запрещён: кошачий сейф не признал пароль", "error")
     return render_template("login.html")
 
 
@@ -397,7 +397,7 @@ def create_client():
     service = request.form.get("service", "")
     name = request.form.get("name", "").strip()
     if service not in SERVICES or not name or len(name) > 64:
-        flash("Проверьте VPN и имя клиента", "error")
+        flash("keygen споткнулся: проверьте VPN-узел и имя клиента", "error")
         return redirect(url_for("index") + "#clients")
     try:
         months = max(1, min(24, int(request.form.get("months", "1"))))
@@ -415,7 +415,7 @@ def create_client():
             save_client_meta(service, str(created[0]["id"]), expires_at, request.form.get("note", "").strip()[:200])
         flash(f"Ключ для «{name}» ушёл в прод. Касса мурчит, туннель шифруется!", "sale")
     except requests.RequestException as exc:
-        flash(f"Не удалось создать клиента: {exc}", "error")
+        flash(f"Ключ не выкован, терминал ругается: {exc}", "error")
     return redirect(url_for("index") + "#clients")
 
 
@@ -437,7 +437,7 @@ def client_action(service: str, client_id: str, action: str):
         else:
             return "Неизвестное действие", 404
     except requests.RequestException as exc:
-        flash(f"Операция не выполнена: {exc}", "error")
+        flash(f"Команда отвалилась по дороге: {exc}", "error")
     return redirect(url_for("index") + "#clients")
 
 
@@ -452,7 +452,7 @@ def client_config(service: str, client_id: str):
     try:
         configuration = client_configuration(service, client_id)
     except (requests.RequestException, UnicodeError) as exc:
-        return f"Конфигурация недоступна: {exc}", 502
+        return f"Сейф не отдал конфиг: {exc}", 502
     disposition = configuration_filename(client.get("name", "") if client else "", client_id)
     return Response(configuration, content_type="text/plain; charset=utf-8", headers={"Content-Disposition": disposition})
 
@@ -475,7 +475,7 @@ def client_qr(service: str, client_id: str):
         with Image.open(png) as image:
             image.convert("RGB").save(output, format="JPEG", quality=95, optimize=True)
     except (requests.RequestException, UnicodeError, ValueError) as exc:
-        return f"QR-код недоступен: {exc}", 502
+        return f"Матрица QR не собралась: {exc}", 502
     return Response(output.getvalue(), content_type="image/jpeg")
 
 
@@ -488,7 +488,7 @@ def client_detail(service: str, client_id: str):
         return "Некорректный запрос", 400
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     if not client:
-        return "Клиент не найден", 404
+        return "Такого агента нет в базе", 404
     return render_template("client.html", client=client, service=service, service_meta=SERVICES[service])
 
 
@@ -505,7 +505,7 @@ def client_extend(service: str, client_id: str):
         months = 1
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     if not client:
-        return "Клиент не найден", 404
+        return "Такого агента нет в базе", 404
     current = client.get("expires_at_dt")
     base = current if current and current > datetime.now(timezone.utc) else datetime.now(timezone.utc)
     expires_at = base + timedelta(days=30 * months)
@@ -515,9 +515,9 @@ def client_extend(service: str, client_id: str):
         if not client.get("enabled"):
             api_call(service, "POST", f"/wireguard/client/{client_id}/enable")
         save_client_meta(service, client_id, expires_at, client.get("note", ""))
-        flash(f"Срок продлён до {human_date(expires_at)}", "success")
+        flash(f"Таймер обезврежен: доступ продлён до {human_date(expires_at)}", "success")
     except requests.RequestException as exc:
-        flash(f"Продление не выполнено: {exc}", "error")
+        flash(f"Таймер не поддался: {exc}", "error")
     return redirect(url_for("client_detail", service=service, client_id=client_id))
 
 
@@ -530,7 +530,7 @@ def update():
         return "Некорректный запрос", 400
     if not update_state["running"]:
         threading.Thread(target=perform_update, daemon=True).start()
-        flash("Обновление всей системы cicig запущено", "success")
+        flash("Кот ушёл на GitHub за свежим патчем", "success")
     return redirect(url_for("index"))
 
 
@@ -548,7 +548,7 @@ def settings():
     except ValueError:
         current["interval_hours"] = 24
     save_settings(current)
-    flash("Настройки автообновления сохранены", "success")
+    flash("Автопилот перепрошит, расписание сохранено", "success")
     return redirect(url_for("index"))
 
 

@@ -6,10 +6,10 @@ readonly ARCHIVE_URL="${CICIG_ARCHIVE_URL:-https://github.com/oitarho/cicig/arch
 
 red='\033[0;31m'; green='\033[0;32m'; amber='\033[0;33m'; cyan='\033[0;36m'; reset='\033[0m'
 say() { printf '%b\n' "$*"; }
-die() { say "${red}Ошибка:${reset} $*" >&2; exit 1; }
-need() { command -v "$1" >/dev/null 2>&1 || die "Нужна команда '$1'."; }
+die() { say "${red}[ КОТ В ПАНИКЕ ]${reset} $*" >&2; exit 1; }
+need() { command -v "$1" >/dev/null 2>&1 || die "В рюкзаке нет команды '$1'."; }
 
-[[ ${EUID:-$(id -u)} -eq 0 ]] || die "Запустите установщик через sudo."
+[[ ${EUID:-$(id -u)} -eq 0 ]] || die "Без root-доступа лапы связаны. Запустите через sudo."
 need curl
 need getent
 need tar
@@ -50,15 +50,15 @@ dns_gate() {
   local expected=$1 vpn_domain=$2 panel_domain=$3 found answer attempt=0
   local vpn_ok panel_ok
 
-  say "\n${cyan}Сначала создайте две DNS-записи типа A (IPv4)${reset}"
+  say "\n${cyan}[ DNS-МАСКИРОВКА ] Создайте две записи типа A (IPv4)${reset}"
   say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
   say "на котором вы управляете своим доменом, и найдите раздел DNS."
-  say "\nПервая запись — основной домен для клиентских VPN-конфигов:"
+  say "\nПервая метка на карте — основной домен для VPN-ключей:"
   say "  Тип записи:       A"
   say "  Имя / Host:       @"
   say "  IPv4 / Значение:  $expected"
   say "  Результат:         $vpn_domain → $expected"
-  say "\nВторая запись — единая веб-панель:"
+  say "\nВторая метка — вход в кошачью root-консоль:"
   say "  Тип записи:       A"
   say "  Имя / Host:       panel"
   say "  IPv4 / Значение:  $expected"
@@ -72,16 +72,16 @@ dns_gate() {
   say "\nОбе записи должны быть DNS only: основной домен принимает VPN-трафик UDP."
 
   while true; do
-    read -r -p "Нажмите Enter для проверки DNS (или введите q для выхода): " answer <"$tty"
+    read -r -p "Кот готов сканировать DNS. Enter — проверить, q — уйти в тень: " answer <"$tty"
     [[ ${answer,,} == q ]] && exit 0
     attempt=$((attempt + 1))
     vpn_ok=0
     panel_ok=0
 
-    say "\nПроверка DNS-записей типа A (IPv4) №$attempt:"
+    say "\n[ DNS-SCAN #$attempt ] Проверяю легенду прикрытия:"
     found=$(resolve_a "$vpn_domain" | paste -sd, -)
     if [[ ,$found, == *,$expected,* ]]; then
-      say "  ${green}✓ Основной домен:${reset} $vpn_domain → $expected — правильно"
+      say "  ${green}✓ VPN-маяк:${reset} $vpn_domain → $expected — цель захвачена"
       vpn_ok=1
     else
       say "  ${red}✗ Основной домен:${reset} $vpn_domain → ${found:-запись не найдена}"
@@ -90,7 +90,7 @@ dns_gate() {
 
     found=$(resolve_a "$panel_domain" | paste -sd, -)
     if [[ ,$found, == *,$expected,* ]]; then
-      say "  ${green}✓ Веб-панель:${reset}     $panel_domain → $expected — правильно"
+      say "  ${green}✓ Вход в сейф:${reset} $panel_domain → $expected — цель захвачена"
       panel_ok=1
     else
       say "  ${red}✗ Веб-панель:${reset}     $panel_domain → ${found:-запись не найдена}"
@@ -98,11 +98,11 @@ dns_gate() {
     fi
 
     if [[ $vpn_ok -eq 1 && $panel_ok -eq 1 ]]; then
-      say "\n${green}DNS настроен правильно.${reset}"
+      say "\n${green}[ ACCESS GRANTED ] DNS-маскировка на месте.${reset}"
       return
     fi
-    say "\n${amber}Пока обе A-записи не верны, установка не начнётся.${reset}"
-    say "Исправьте отмеченную красным запись и запустите проверку ещё раз."
+    say "\n${amber}Один из маяков палится. Пока обе A-записи не верны, нода не стартует.${reset}"
+    say "Поправьте красную цель — кот останется здесь и просканирует снова."
   done
 }
 
@@ -121,10 +121,10 @@ base_domain=${base_domain,,}
 base_domain=${base_domain%.}
 valid_domain "$base_domain" || die "Некорректный домен: $base_domain"
 panel_domain="panel.$base_domain"
-say "Будет настроен единый адрес: $panel_domain"
+say "Вход в кошачий сейф будет здесь: $panel_domain"
 email=$(prompt "Email для TLS" "admin@$base_domain")
 server_ip=$(public_ipv4) || die "Не удалось определить публичный IPv4."
-say "Публичный IPv4 сервера: ${green}$server_ip${reset}"
+say "Внешний след ноды (IPv4): ${green}$server_ip${reset}"
 
 # Hard gate: no package installation or system mutation happens before DNS succeeds.
 dns_gate "$server_ip" "$base_domain" "$panel_domain"
@@ -141,7 +141,7 @@ fi
 [[ -c /dev/net/tun ]] || die "Устройство /dev/net/tun недоступно. Включите TUN/TAP в панели вашего VPS-провайдера и повторите установку."
 say "${green}[ OK ] TUN/TAP доступен.${reset}"
 
-say "${cyan}[ ЭТАП 3/4 ] Установка контейнерной системы${reset}"
+say "${cyan}[ ЭТАП 3/4 ] Собираю контейнерный рюкзак${reset}"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
 fi
@@ -151,9 +151,9 @@ if ! command -v htpasswd >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends apache2-utils
 fi
 
-read -r -s -p "Пароль администратора панелей: " admin_password <"$tty"; printf '\n' >"$tty"
+read -r -s -p "Мастер-пароль от кошачьего сейфа: " admin_password <"$tty"; printf '\n' >"$tty"
 [[ ${#admin_password} -ge 12 ]] || die "Пароль должен содержать минимум 12 символов."
-read -r -s -p "Повторите пароль: " admin_password_2 <"$tty"; printf '\n' >"$tty"
+read -r -s -p "Контрольный мяу-пароль ещё раз: " admin_password_2 <"$tty"; printf '\n' >"$tty"
 [[ $admin_password == "$admin_password_2" ]] || die "Пароли не совпадают."
 
 install -d -m 700 "$CICIG_DIR"
@@ -176,11 +176,11 @@ EOF
 cd "$CICIG_DIR"
 docker compose config --quiet
 docker compose pull caddy wg-easy awg-easy
-say "${cyan}[ ЭТАП 4/4 ] Запуск защищённого VPN-узла${reset}"
+say "${cyan}[ ЭТАП 4/4 ] Выпускаю зашифрованные тоннели в сеть${reset}"
 docker compose up -d --build
 
-say "\n${green}cicig установлен.${reset}"
-say "Панель:     https://$panel_domain"
+say "\n${green}[ МИССИЯ ВЫПОЛНЕНА ] cicig поднят, кот получил root.${reset}"
+say "Кошачий сейф: https://$panel_domain"
 say "WireGuard:  $base_domain:51820/udp"
 say "AmneziaWG: $base_domain:443/udp"
-say "Статус: cd $CICIG_DIR && docker compose ps"
+say "Проверить пульс ноды: cd $CICIG_DIR && docker compose ps"
