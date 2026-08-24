@@ -5,6 +5,10 @@
 <h1 align="center">cicig</h1>
 
 <p align="center">
+  <strong>Русский</strong> · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
   <strong>WireGuard и AmneziaWG под одной лапой.</strong><br>
   Один домен, одна русскоязычная панель и полный цикл управления VPN-доступами.
 </p>
