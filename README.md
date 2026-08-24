@@ -5,11 +5,11 @@
 One-command, domain-first deployment of two self-hosted VPNs and one control panel:
 
 - `panel.example.com:443/tcp` — unified cicig web panel.
-- `panel.example.com:51820/udp` — WireGuard endpoint.
-- `panel.example.com:443/udp` — AmneziaWG endpoint.
+- `example.com:51820/udp` — WireGuard endpoint used in client configs.
+- `example.com:443/udp` — AmneziaWG endpoint used in client configs.
 - Caddy provides automatic HTTPS. HTTP/3 is intentionally disabled because AmneziaWG owns UDP/443.
 
-The installer refuses to modify the server until the single `panel` DNS A record resolves to its public IPv4 address. For Cloudflare, use **DNS only** (grey cloud).
+The installer refuses to modify the server until both the root-domain and `panel` DNS A records resolve to its public IPv4 address. For Cloudflare, use **DNS only** (grey cloud) on both records because the root domain carries VPN UDP traffic.
 
 ## Quick start
 
@@ -17,7 +17,7 @@ The installer refuses to modify the server until the single `panel` DNS A record
 curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash
 ```
 
-The script asks only for the base domain (for example, `mydomain.com`) and automatically uses `panel.mydomain.com`. It shows the exact A record to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
+The script asks only for the base domain (for example, `mydomain.com`). It uses that root domain in both VPN client configurations and automatically creates the panel address `panel.mydomain.com`. It shows the two exact A records to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
 
 The control panel shows both VPN services, their image and health status, their shared-domain endpoints, manual update buttons, and independent automatic-update switches. Updates are restricted to the `wg-easy` and `awg-easy` Compose services.
 
@@ -25,7 +25,7 @@ The control panel shows both VPN services, their image and health status, their 
 
 - Fresh Ubuntu 22.04/24.04 or Debian 12 server
 - Public IPv4
-- One `panel` DNS A record pointing directly to the server
+- Root-domain and `panel` DNS A records pointing directly to the server
 - TCP 80/443 and UDP 443/51820 available
 - Linux `amd64` for the current AmneziaWG image
 

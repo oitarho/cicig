@@ -161,7 +161,7 @@ def index():
         cards.append({
             "name": name,
             "title": metadata["title"],
-            "endpoint": f"{os.environ['PANEL_DOMAIN']}:{metadata['endpoint']}",
+            "endpoint": f"{os.environ['VPN_DOMAIN']}:{metadata['endpoint']}",
             "status": service_status(name),
             "auto_update": bool(settings["auto_update"].get(name)),
             "update": update_state[name].copy(),

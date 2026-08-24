@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     environment:
       PANEL_DOMAIN: ${PANEL_DOMAIN}
+      VPN_DOMAIN: ${VPN_DOMAIN}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     ports:
       - "80:80/tcp"
@@ -27,6 +28,7 @@ services:
     restart: unless-stopped
     environment:
       PANEL_DOMAIN: ${PANEL_DOMAIN}
+      VPN_DOMAIN: ${VPN_DOMAIN}
       PANEL_PASSWORD_HASH: ${PANEL_PASSWORD_HASH}
       PANEL_SECRET_KEY: ${PANEL_SECRET_KEY}
       CICIG_PROJECT_DIR: /opt/cicig
@@ -42,7 +44,7 @@ services:
     restart: unless-stopped
     environment:
       LANG: ru
-      WG_HOST: ${PANEL_DOMAIN}
+      WG_HOST: ${VPN_DOMAIN}
       WG_PORT: ${WG_PORT:-51820}
       PORT: 51821
       PASSWORD_HASH: ${WG_PASSWORD_HASH}
@@ -66,7 +68,7 @@ services:
     restart: unless-stopped
     environment:
       LANG: ru
-      WG_HOST: ${PANEL_DOMAIN}
+      WG_HOST: ${VPN_DOMAIN}
       WG_PORT: ${AWG_PORT:-443}
       PORT: 51821
       PASSWORD_HASH: ${AWG_PASSWORD_HASH}

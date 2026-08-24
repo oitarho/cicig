@@ -47,12 +47,18 @@ resolve_a() {
 }
 
 dns_gate() {
-  local expected=$1 panel_domain=$2 found answer attempt=0
+  local expected=$1 vpn_domain=$2 panel_domain=$3 found answer attempt=0
+  local vpn_ok panel_ok
 
-  say "\n${cyan}Сначала создайте одну DNS-запись типа A (IPv4)${reset}"
+  say "\n${cyan}Сначала создайте две DNS-записи типа A (IPv4)${reset}"
   say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
   say "на котором вы управляете своим доменом, и найдите раздел DNS."
-  say "\nСоздайте DNS-запись:"
+  say "\nПервая запись — основной домен для клиентских VPN-конфигов:"
+  say "  Тип записи:       A"
+  say "  Имя / Host:       @"
+  say "  IPv4 / Значение:  $expected"
+  say "  Результат:         $vpn_domain → $expected"
+  say "\nВторая запись — единая веб-панель:"
   say "  Тип записи:       A"
   say "  Имя / Host:       panel"
   say "  IPv4 / Значение:  $expected"
@@ -62,26 +68,41 @@ dns_gate() {
   say "  2. Выберите Type: A."
   say "  3. Заполните Name и IPv4 address значениями выше."
   say "  4. Выключите Proxy status. Должно быть серое облако ${amber}DNS only${reset}."
-  say "  5. Нажмите Save."
-  say "\nОдин домен будет использоваться для панели и обоих VPN-протоколов."
+  say "  5. Нажмите Save и повторите для второй записи."
+  say "\nОбе записи должны быть DNS only: основной домен принимает VPN-трафик UDP."
 
   while true; do
     read -r -p "Нажмите Enter для проверки DNS (или введите q для выхода): " answer <"$tty"
     [[ ${answer,,} == q ]] && exit 0
     attempt=$((attempt + 1))
+    vpn_ok=0
+    panel_ok=0
 
     say "\nПроверка DNS-записей типа A (IPv4) №$attempt:"
+    found=$(resolve_a "$vpn_domain" | paste -sd, -)
+    if [[ ,$found, == *,$expected,* ]]; then
+      say "  ${green}✓ Основной домен:${reset} $vpn_domain → $expected — правильно"
+      vpn_ok=1
+    else
+      say "  ${red}✗ Основной домен:${reset} $vpn_domain → ${found:-запись не найдена}"
+      say "                     Нужно: $expected"
+    fi
+
     found=$(resolve_a "$panel_domain" | paste -sd, -)
     if [[ ,$found, == *,$expected,* ]]; then
-      say "  ${green}✓ A-запись:${reset} $panel_domain → $expected — правильно"
+      say "  ${green}✓ Веб-панель:${reset}     $panel_domain → $expected — правильно"
+      panel_ok=1
+    else
+      say "  ${red}✗ Веб-панель:${reset}     $panel_domain → ${found:-запись не найдена}"
+      say "                     Нужно: $expected"
+    fi
+
+    if [[ $vpn_ok -eq 1 && $panel_ok -eq 1 ]]; then
       say "\n${green}DNS настроен правильно.${reset}"
       return
-    else
-      say "  ${red}✗ A-запись:${reset} $panel_domain → ${found:-запись не найдена}"
-      say "                 Нужно: $expected"
     fi
-    say "\n${amber}Пока A-запись неверна, установка не начнётся.${reset}"
-    say "Исправьте запись и запустите проверку ещё раз."
+    say "\n${amber}Пока обе A-записи не верны, установка не начнётся.${reset}"
+    say "Исправьте отмеченную красным запись и запустите проверку ещё раз."
   done
 }
 
@@ -102,7 +123,7 @@ server_ip=$(public_ipv4) || die "Не удалось определить пуб
 say "Публичный IPv4 сервера: ${green}$server_ip${reset}"
 
 # Hard gate: no package installation or system mutation happens before DNS succeeds.
-dns_gate "$server_ip" "$panel_domain"
+dns_gate "$server_ip" "$base_domain" "$panel_domain"
 say "${green}DNS проверен. Начинаю установку.${reset}"
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -130,6 +151,7 @@ unset admin_password admin_password_2
 umask 077
 cat >"$CICIG_DIR/.env" <<EOF
 PANEL_DOMAIN=$panel_domain
+VPN_DOMAIN=$base_domain
 LETSENCRYPT_EMAIL=$email
 WG_PORT=51820
 AWG_PORT=443
@@ -146,6 +168,6 @@ docker compose up -d --build
 
 say "\n${green}cicig установлен.${reset}"
 say "Панель:     https://$panel_domain"
-say "WireGuard:  $panel_domain:51820/udp"
-say "AmneziaWG: $panel_domain:443/udp"
+say "WireGuard:  $base_domain:51820/udp"
+say "AmneziaWG: $base_domain:443/udp"
 say "Статус: cd $CICIG_DIR && docker compose ps"
