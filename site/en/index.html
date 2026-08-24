@@ -33,9 +33,10 @@
       </a>
       <nav class="main-nav" aria-label="Main navigation">
         <a href="#features" data-index="01">Features</a>
-        <a href="#architecture" data-index="02">Architecture</a>
-        <a href="#requirements" data-index="03">Requirements</a>
-        <a href="#install" data-index="04">Installation</a>
+        <a href="#comparison" data-index="02">Comparison</a>
+        <a href="#architecture" data-index="03">Architecture</a>
+        <a href="#requirements" data-index="04">Requirements</a>
+        <a href="#install" data-index="05">Installation</a>
       </nav>
       <div class="nav-actions">
         <div class="language-switch" aria-label="Choose language"><a href="../" lang="ru">RU</a><a class="active" href="./" lang="en">EN</a></div>
@@ -49,7 +50,8 @@
       <div class="hero-copy">
         <p class="eyebrow"><span>00</span> / SELF_HOSTED VPN CONTROL</p>
         <h1>Two tunnels.<em>One panel.</em></h1>
-        <p class="hero-lead"><strong>cicig</strong> deploys WireGuard and AmneziaWG on your server, issues client configurations, and controls access periods from a single interface.</p>
+        <p class="hero-lead"><strong>cicig</strong> is a self-hosted panel for WireGuard and AmneziaWG. One client list replaces two separate panels: configurations, QR codes, expiration, and network limits are managed in one place.</p>
+        <p class="hero-proof"><span>WG + AWG</span> one server · one interface · one registry</p>
 
         <div class="install-command" aria-label="Installation command">
           <span>$</span>
@@ -64,8 +66,8 @@
       </div>
 
       <div class="hero-visual" aria-label="Two VPN tunnel diagram">
-        <span class="visual-code top">NODE_CICIG / CAT_ON_GUARD</span>
-        <span class="visual-code side">SIGNAL: ENCRYPTED</span>
+        <span class="visual-code top">CICIG // ONLINE</span>
+        <span class="visual-code side">DUAL TUNNEL</span>
         <div class="cat-orbit"><img src="../assets/cicig-cat-hacker.png" alt="cicig hacker cat logo"></div>
         <div class="tunnel-monitor">
           <div class="tunnel-line"><span>WG</span><div><small>TUNNEL_A</small><strong>WireGuard</strong></div><i></i></div>
@@ -78,15 +80,20 @@
       <div class="signal-strip-inner">
         <article><small>Deployment</small><strong>1 command</strong></article>
         <article><small>VPN protocols</small><strong>WG + AWG</strong></article>
-        <article><small>Control panel</small><strong>1 domain</strong></article>
+        <article><small>Management</small><strong>1 interface</strong></article>
         <article><small>License</small><strong>MIT / OPEN</strong></article>
       </div>
     </section>
 
+    <section class="audience-section" aria-labelledby="audience-title">
+      <div class="audience-copy"><p class="plain-label">Who it is for</p><h2 id="audience-title">VPN without two admin panels</h2></div>
+      <ul class="audience-list"><li>Home VPN</li><li>A VPS for friends</li><li>A small team</li><li>Multiple users</li><li>Both WG and AWG</li></ul>
+    </section>
+
     <section class="content-section showcase">
       <div id="panel-preview" class="section-head">
-        <div><p class="section-kicker"><span>UI</span> / CONTROL_DECK</p><h2>A panel without <em>mazes</em></h2></div>
-        <p>Both protocols live in one compact registry: clients, traffic, expiration, and quick actions remain visible without unnecessary navigation.</p>
+        <div><p class="section-kicker"><span>UI</span> / UNIFIED PANEL</p><h2>WG + AWG. <em>One registry.</em></h2></div>
+        <p>WireGuard and AmneziaWG are managed as one system. Users, configurations, QR codes, expiration, and traffic live in one interface—there is no need to switch between separate panels.</p>
       </div>
       <figure class="panel-shot">
         <header><span><i></i><i></i><i></i></span><code>panel.mydomain.com / ACCESS_VAULT</code><b>DEMO_DATA</b></header>
@@ -97,7 +104,7 @@
 
     <section class="content-section">
       <div id="features" class="section-head">
-        <div><p class="section-kicker"><span>01</span> / ACCESS_VAULT</p><h2>Everything for <em>access</em></h2></div>
+        <div><p class="section-kicker"><span>01</span> / FEATURES</p><h2>Everything for <em>access</em></h2></div>
         <p>The administrator operates both VPN protocols as one system. The user only needs to import a ready-to-use configuration.</p>
       </div>
 
@@ -111,14 +118,38 @@
       </div>
     </section>
 
+    <section class="content-section comparison-section">
+      <div id="comparison" class="section-head">
+        <div><p class="section-kicker"><span>02</span> / COMPARISON</p><h2>cicig and <em>wg-easy</em></h2></div>
+        <p>Both projects are self-hosted and manage VPN clients on your own server. cicig differs by operating two protocols at the same time.</p>
+      </div>
+
+      <div class="comparison-card">
+        <table class="comparison-table">
+          <thead><tr><th>Capability</th><th><span class="product-name cicig-name">cicig</span></th><th><span class="product-name">wg-easy</span></th></tr></thead>
+          <tbody>
+            <tr><th scope="row">WireGuard</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">AmneziaWG</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="no">—</span></td></tr>
+            <tr class="comparison-highlight"><th scope="row">WG + AWG in one panel</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="no">—</span></td></tr>
+            <tr><th scope="row">QR codes</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Client configurations</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Access expiration</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
+            <tr><th scope="row">Self-hosted</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
+          </tbody>
+        </table>
+        <div class="comparison-conclusion"><strong>When does cicig fit?</strong><p>If you only need WireGuard, there are many suitable panels. cicig is especially useful when WireGuard and AmneziaWG must run together—with a shared client list and unified management.</p></div>
+        <p class="comparison-source">wg-easy capabilities were checked against its <a href="https://github.com/wg-easy/wg-easy#features">official feature list</a> and <a href="https://wg-easy.github.io/wg-easy/latest/guides/clients/">client documentation</a>.</p>
+      </div>
+    </section>
+
     <section class="content-section">
       <div id="architecture" class="section-head">
-        <div><p class="section-kicker"><span>02</span> / SIGNAL_ROUTE</p><h2>Clear <em>architecture</em></h2></div>
+        <div><p class="section-kicker"><span>03</span> / ARCHITECTURE</p><h2>Clear <em>architecture</em></h2></div>
         <p>Only the HTTPS panel entry point and two UDP ports are public. Client data and VPN keys stay on your server.</p>
       </div>
 
       <div class="architecture">
-        <header class="architecture-head"><span>ROUTE_MAP // CICIG</span><b>SELF_HOSTED / NO EXTERNAL CONTROL PLANE</b></header>
+        <header class="architecture-head"><span>CICIG / ROUTE</span><b>DATA STAYS ON YOUR SERVER</b></header>
         <div class="flow">
           <div class="flow-node"><span>OPERATOR_01</span><strong>Administrator</strong><small>Issues keys and controls expiration</small></div>
           <div class="flow-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-arrow-right"></use></svg></div>
@@ -131,10 +162,9 @@
 
     <section class="content-section">
       <div id="requirements" class="section-head">
-        <div><p class="section-kicker"><span>03</span> / SERVER_PROFILE</p><h2>Start <em>small</em></h2></div>
+        <div><p class="section-kicker"><span>04</span> / REQUIREMENTS</p><h2>Start <em>small</em></h2></div>
         <p>Size the server by concurrent connections and real traffic, not by the total number of issued keys.</p>
       </div>
-
       <div class="requirements-grid">
         <article class="minimum-spec">
           <h3>Minimum node</h3>
@@ -157,7 +187,7 @@
 
     <section class="content-section">
       <div id="install" class="section-head">
-        <div><p class="section-kicker"><span>04</span> / DEPLOY_SEQUENCE</p><h2>Three steps to a <em>tunnel</em></h2></div>
+        <div><p class="section-kicker"><span>05</span> / INSTALLATION</p><h2>Three steps to a <em>tunnel</em></h2></div>
         <p>The installer validates DNS, installs Docker, starts every service, and obtains an HTTPS certificate.</p>
       </div>
 
@@ -170,7 +200,7 @@
 
     <section class="content-section">
       <div id="clients" class="section-head">
-        <div><p class="section-kicker"><span>05</span> / CLIENT_APPS</p><h2>Official <em>clients</em></h2></div>
+        <div><p class="section-kicker"><span>06</span> / APPLICATIONS</p><h2>Official <em>clients</em></h2></div>
         <p>Open each configuration in the matching protocol app. Create a separate key for every device.</p>
       </div>
       <div class="client-rails">
