@@ -13,6 +13,8 @@ services:
       - "443:443/tcp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./landing:/srv:ro
+      - ./assets:/srv/assets:ro
       - caddy_data:/data
       - caddy_config:/config
     networks: [cicig]

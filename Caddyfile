@@ -16,3 +16,16 @@
 		Referrer-Policy no-referrer
 	}
 }
+
+{$VPN_DOMAIN} {
+	root * /srv
+	templates
+	file_server
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Content-Security-Policy "default-src 'self'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+	}
+}

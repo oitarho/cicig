@@ -23,6 +23,12 @@ jobs:
         run: |
           cp .env.example .env
           docker compose config --quiet
+          docker run --rm \
+            -e PANEL_DOMAIN=panel.example.com \
+            -e VPN_DOMAIN=example.com \
+            -e LETSENCRYPT_EMAIL=admin@example.com \
+            -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2.10-alpine caddy validate --config /etc/caddy/Caddyfile
       - name: Build control panel
         run: |
           docker build -t cicig-panel:test -f panel/Dockerfile .
