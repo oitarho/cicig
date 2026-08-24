@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import sqlite3
 import subprocess
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import bcrypt
@@ -17,6 +18,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 PROJECT_DIR = Path(os.environ.get("CICIG_PROJECT_DIR", "/opt/cicig"))
 DATA_DIR = Path(os.environ.get("CICIG_PANEL_DATA", "/data"))
 SETTINGS_FILE = DATA_DIR / "settings.json"
+DB_FILE = DATA_DIR / "cicig.db"
 SERVICES = {
     "wg-easy": {"title": "WireGuard", "short": "WG", "endpoint": "51820/udp", "api": "http://wg-easy:51821"},
     "awg-easy": {"title": "AmneziaWG", "short": "AWG", "endpoint": "443/udp", "api": "http://awg-easy:51821"},
@@ -35,6 +37,63 @@ update_lock = threading.Lock()
 update_state: dict[str, dict] = {
     name: {"running": False, "result": "", "updated_at": ""} for name in SERVICES
 }
+
+
+def db_connection() -> sqlite3.Connection:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(DB_FILE)
+    connection.row_factory = sqlite3.Row
+    connection.execute(
+        """CREATE TABLE IF NOT EXISTS client_meta (
+        service TEXT NOT NULL,
+        client_id TEXT NOT NULL,
+        expires_at TEXT,
+        note TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        PRIMARY KEY(service, client_id)
+        )"""
+    )
+    connection.commit()
+    return connection
+
+
+def client_meta(service: str, client_id: str) -> dict:
+    with db_connection() as connection:
+        row = connection.execute(
+            "SELECT * FROM client_meta WHERE service=? AND client_id=?", (service, client_id)
+        ).fetchone()
+    return dict(row) if row else {}
+
+
+def save_client_meta(service: str, client_id: str, expires_at: datetime | None, note: str = "") -> None:
+    with db_connection() as connection:
+        connection.execute(
+            """INSERT INTO client_meta(service,client_id,expires_at,note,created_at)
+            VALUES(?,?,?,?,?) ON CONFLICT(service,client_id) DO UPDATE SET
+            expires_at=excluded.expires_at,note=excluded.note""",
+            (service, client_id, expires_at.isoformat() if expires_at else None, note, datetime.now(timezone.utc).isoformat()),
+        )
+        connection.commit()
+
+
+def delete_client_meta(service: str, client_id: str) -> None:
+    with db_connection() as connection:
+        connection.execute("DELETE FROM client_meta WHERE service=? AND client_id=?", (service, client_id))
+        connection.commit()
+
+
+def parse_datetime(value) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return parsed.replace(tzinfo=parsed.tzinfo or timezone.utc).astimezone(timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def human_date(value: datetime | None) -> str:
+    return value.astimezone().strftime("%d.%m.%Y") if value else "Без срока"
 
 
 def load_settings() -> dict:
@@ -94,11 +153,38 @@ def clients_for(service: str) -> list[dict]:
     except (requests.RequestException, ValueError):
         return []
     for client in clients:
+        metadata = client_meta(service, str(client.get("id", "")))
+        expires = parse_datetime(metadata.get("expires_at")) or parse_datetime(client.get("expiredAt"))
+        created = parse_datetime(client.get("createdAt"))
+        handshake = parse_datetime(client.get("latestHandshakeAt"))
+        age = (datetime.now(timezone.utc) - handshake).total_seconds() if handshake else None
+        if age is not None and age <= 180:
+            connection = "online"
+        elif age is not None and age <= 86400:
+            connection = "recent"
+        else:
+            connection = "offline"
+        days_left = (expires.date() - datetime.now(timezone.utc).date()).days if expires else None
+        if not client.get("enabled"):
+            subscription = "disabled"
+        elif days_left is not None and days_left < 0:
+            subscription = "expired"
+        elif days_left is not None and days_left <= 7:
+            subscription = "expiring"
+        else:
+            subscription = "active"
         client["service"] = service
         client["service_title"] = SERVICES[service]["title"]
         client["service_short"] = SERVICES[service]["short"]
         client["transfer_rx_h"] = human_bytes(client.get("transferRx"))
         client["transfer_tx_h"] = human_bytes(client.get("transferTx"))
+        client["expires_at_dt"] = expires
+        client["expires_label"] = human_date(expires)
+        client["days_left"] = days_left
+        client["created_label"] = human_date(created)
+        client["connection"] = connection
+        client["subscription"] = subscription
+        client["note"] = metadata.get("note", "")
     return clients
 
 
@@ -158,6 +244,21 @@ def auto_update_loop() -> None:
                 perform_update(name)
 
 
+def expiry_loop() -> None:
+    """Disable expired clients even when the upstream panel has no expiry support."""
+    while True:
+        time.sleep(60)
+        now = datetime.now(timezone.utc)
+        for service in SERVICES:
+            for client in clients_for(service):
+                expires = client.get("expires_at_dt")
+                if expires and expires < now and client.get("enabled"):
+                    try:
+                        api_call(service, "POST", f"/wireguard/client/{client['id']}/disable")
+                    except requests.RequestException:
+                        pass
+
+
 @app.before_request
 def csrf_setup() -> None:
     session.setdefault("csrf", secrets.token_urlsafe(32))
@@ -215,12 +316,34 @@ def index():
             "auto_update": bool(settings["auto_update"].get(name)),
             "update": update_state[name].copy(),
         })
-    clients = {name: clients_for(name) for name in SERVICES}
-    total_clients = sum(len(items) for items in clients.values())
-    enabled_clients = sum(1 for items in clients.values() for client in items if client.get("enabled"))
+    all_clients = {name: clients_for(name) for name in SERVICES}
+    flat_clients = [client for items in all_clients.values() for client in items]
+    total_clients = len(flat_clients)
+    enabled_clients = sum(1 for client in flat_clients if client.get("enabled"))
+    counts = {
+        "subscription": {key: sum(1 for client in flat_clients if client["subscription"] == key) for key in ("active", "expiring", "expired", "disabled")},
+        "connection": {key: sum(1 for client in flat_clients if client["connection"] == key) for key in ("online", "recent", "offline")},
+    }
+    query = request.args.get("q", "").strip().lower()
+    subscription_filter = request.args.get("subscription", "all")
+    connection_filter = request.args.get("connection", "all")
+    service_filter = request.args.get("service", "all")
+    clients = {}
+    for name, items in all_clients.items():
+        if service_filter != "all" and service_filter != name:
+            clients[name] = []
+            continue
+        clients[name] = [
+            client for client in items
+            if (not query or query in f"{client.get('name','')} {client.get('address','')} {client.get('publicKey','')}".lower())
+            and (subscription_filter == "all" or client["subscription"] == subscription_filter)
+            and (connection_filter == "all" or client["connection"] == connection_filter)
+        ]
     return render_template(
         "index.html", cards=cards, clients=clients, settings=settings,
-        total_clients=total_clients, enabled_clients=enabled_clients,
+        total_clients=total_clients, enabled_clients=enabled_clients, counts=counts,
+        query=query, subscription_filter=subscription_filter,
+        connection_filter=connection_filter, service_filter=service_filter,
     )
 
 
@@ -236,11 +359,20 @@ def create_client():
     if service not in SERVICES or not name or len(name) > 64:
         flash("Проверьте VPN и имя клиента", "error")
         return redirect(url_for("index") + "#clients")
-    payload = {"name": name}
-    if service == "awg-easy" and request.form.get("expired_date"):
-        payload["expiredDate"] = request.form["expired_date"]
     try:
+        months = max(1, min(24, int(request.form.get("months", "1"))))
+    except ValueError:
+        months = 1
+    expires_at = datetime.now(timezone.utc) + timedelta(days=30 * months)
+    payload = {"name": name}
+    if service == "awg-easy":
+        payload["expiredDate"] = expires_at.date().isoformat()
+    try:
+        old_ids = {str(client.get("id")) for client in clients_for(service)}
         api_call(service, "POST", "/wireguard/client", json=payload)
+        created = [client for client in clients_for(service) if str(client.get("id")) not in old_ids]
+        if created:
+            save_client_meta(service, str(created[0]["id"]), expires_at, request.form.get("note", "").strip()[:200])
         flash(f"Клиент «{name}» создан в {SERVICES[service]['title']}", "success")
     except requests.RequestException as exc:
         flash(f"Не удалось создать клиента: {exc}", "error")
@@ -260,6 +392,7 @@ def client_action(service: str, client_id: str, action: str):
             flash("Состояние клиента изменено", "success")
         elif action == "delete":
             api_call(service, "DELETE", f"/wireguard/client/{client_id}")
+            delete_client_meta(service, client_id)
             flash("Клиент удалён", "success")
         else:
             return "Unknown action", 404
@@ -297,6 +430,48 @@ def client_qr(service: str, client_id: str):
     return Response(upstream.content, content_type="image/svg+xml")
 
 
+@app.get("/clients/<service>/<client_id>")
+def client_detail(service: str, client_id: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if service not in SERVICES or not safe_client_id(client_id):
+        return "Bad request", 400
+    client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
+    if not client:
+        return "Client not found", 404
+    return render_template("client.html", client=client, service=service, service_meta=SERVICES[service])
+
+
+@app.post("/clients/<service>/<client_id>/extend")
+def client_extend(service: str, client_id: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if not valid_csrf() or service not in SERVICES or not safe_client_id(client_id):
+        return "Bad request", 400
+    try:
+        months = max(1, min(24, int(request.form.get("months", "1"))))
+    except ValueError:
+        months = 1
+    client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
+    if not client:
+        return "Client not found", 404
+    current = client.get("expires_at_dt")
+    base = current if current and current > datetime.now(timezone.utc) else datetime.now(timezone.utc)
+    expires_at = base + timedelta(days=30 * months)
+    try:
+        if service == "awg-easy":
+            api_call(service, "PUT", f"/wireguard/client/{client_id}/expireDate", json={"expireDate": expires_at.date().isoformat()})
+        if not client.get("enabled"):
+            api_call(service, "POST", f"/wireguard/client/{client_id}/enable")
+        save_client_meta(service, client_id, expires_at, client.get("note", ""))
+        flash(f"Срок продлён до {human_date(expires_at)}", "success")
+    except requests.RequestException as exc:
+        flash(f"Продление не выполнено: {exc}", "error")
+    return redirect(url_for("client_detail", service=service, client_id=client_id))
+
+
 @app.post("/update/<name>")
 def update(name: str):
     denied = require_login()
@@ -329,3 +504,4 @@ def settings():
 
 
 threading.Thread(target=auto_update_loop, daemon=True).start()
+threading.Thread(target=expiry_loop, daemon=True).start()

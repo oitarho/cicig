@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>cicig — управление VPN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}">
 </head>
 <body>
 <header>
@@ -23,6 +24,18 @@
 
   <section id="clients" class="section-head"><div><p class="eyebrow">Доступы</p><h2>VPN-клиенты</h2></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Новый клиент</button></section>
 
+  <form class="filters" method="get" action="{{ url_for('index') }}#clients">
+    <input class="search" type="search" name="q" value="{{ query }}" placeholder="Имя, IP или публичный ключ…">
+    <select name="service" onchange="this.form.submit()"><option value="all">Оба VPN</option><option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option><option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option></select>
+    <button>Найти</button><a class="reset" href="{{ url_for('index') }}#clients">Сбросить</a>
+    <div class="filter-row"><span>Подписка</span>
+      {% for key, label in [('all','Все'),('active','Активные'),('expiring','Скоро'),('expired','Истекли'),('disabled','Выключены')] %}<a class="chip {% if subscription_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ key }}&connection={{ connection_filter }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.subscription[key] }}</b></a>{% endfor %}
+    </div>
+    <div class="filter-row"><span>Связь</span>
+      {% for key, label in [('all','Все'),('online','Онлайн'),('recent','Недавно'),('offline','Офлайн')] %}<a class="chip {% if connection_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ subscription_filter }}&connection={{ key }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.connection[key] }}</b></a>{% endfor %}
+    </div>
+  </form>
+
   <div class="client-groups">
   {% for service, items in clients.items() %}
     <section class="client-group">
@@ -31,8 +44,9 @@
       <div class="client-list">
         {% for client in items %}
         <article class="client-row">
-          <div class="client-main"><span class="dot {{ 'online' if client.enabled else 'off' }}"></span><div><strong>{{ client.name }}</strong><small>{{ client.address }} · {{ 'включён' if client.enabled else 'отключён' }}</small></div></div>
+          <a class="client-main" href="{{ url_for('client_detail', service=service, client_id=client.id) }}"><span class="dot {{ client.connection }}"></span><div><strong>{{ client.name }}</strong><small>{{ client.address }} · {{ client.note or client.service_title }}</small></div></a>
           <div class="traffic"><span>↓ {{ client.transfer_rx_h }}</span><span>↑ {{ client.transfer_tx_h }}</span></div>
+          <div class="client-state"><span class="badge {{ client.subscription }}">{{ {'active':'активен','expiring':'скоро','expired':'истёк','disabled':'выключен'}[client.subscription] }}</span><small>{{ client.expires_label }}</small></div>
           <div class="client-actions">
             <a class="icon-button" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="QR-код">QR</a>
             <a class="icon-button" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
@@ -74,6 +88,8 @@
     <div class="dialog-head"><div><p class="eyebrow">Новый доступ</p><h2>Создать VPN-клиента</h2></div><button type="button" class="close" onclick="this.closest('dialog').close()">×</button></div>
     <label>VPN-сервис<select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
     <label>Имя клиента<input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
+    <label>Срок доступа<select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
+    <label>Заметка<input name="note" maxlength="200" placeholder="Телефон, владелец или комментарий"></label>
     <p class="hint">После создания скачайте конфигурацию или откройте QR-код в списке клиентов.</p>
     <button class="wide">Создать клиента</button>
   </form>

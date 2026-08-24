@@ -19,7 +19,9 @@ curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sud
 
 The script asks only for the base domain (for example, `mydomain.com`). It uses that root domain in both VPN client configurations and automatically creates the panel address `panel.mydomain.com`. It shows the two exact A records to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
 
-The control panel provides one client list for both VPNs. It can create, enable, disable, and delete clients, download `.conf` files, display QR codes, show traffic totals and service health, run manual updates, and configure independent automatic updates. Updates are restricted to the `wg-easy` and `awg-easy` Compose services.
+The control panel provides one searchable client list for both VPNs, with filters for VPN type, subscription state, and recent connectivity. Each client has a dedicated page with its IP, public key, creation and expiry dates, traffic, QR code, configuration download, extension, enable/disable, and deletion controls. New clients can have a term and an operator note. cicig automatically disables expired clients (including standard WireGuard clients, whose expiry metadata is kept in the panel database).
+
+The same panel displays service health, runs manual updates, and configures independent automatic updates. Updates are restricted to the `wg-easy` and `awg-easy` Compose services.
 
 ## Requirements
 
