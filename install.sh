@@ -46,44 +46,64 @@ resolve_a() {
 }
 
 dns_gate() {
-  local expected=$1 wg_domain=$2 awg_domain=$3 domain found ok answer
+  local expected=$1 wg_domain=$2 awg_domain=$3 found answer
+  local wg_ok awg_ok attempt=0
   local wg_name=${wg_domain%%.*} awg_name=${awg_domain%%.*}
-  while true; do
-    say "\n${cyan}Сначала направьте оба домена на этот сервер${reset}"
-    say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
-    say "на котором вы управляете своим доменом, и найдите раздел DNS."
-    say "\nСоздайте первую DNS-запись:"
-    say "  Тип записи:       A"
-    say "  Имя / Host:       $wg_name"
-    say "  IPv4 / Значение:  $expected"
-    say "  Результат:         $wg_domain → $expected"
-    say "\nСоздайте вторую DNS-запись:"
-    say "  Тип записи:       A"
-    say "  Имя / Host:       $awg_name"
-    say "  IPv4 / Значение:  $expected"
-    say "  Результат:         $awg_domain → $expected"
-    say "\nЕсли ваш домен находится в Cloudflare:"
-    say "  1. Откройте DNS → Records → Add record."
-    say "  2. Выберите Type: A."
-    say "  3. Заполните Name и IPv4 address значениями выше."
-    say "  4. Выключите Proxy status. Должно быть серое облако ${amber}DNS only${reset}."
-    say "  5. Нажмите Save. Повторите для второго домена."
-    say "\nКогда сохраните обе записи, вернитесь в этот терминал."
-    read -r -p "Нажмите Enter, чтобы проверить DNS (или введите q для выхода): " answer <"$tty"
-    [[ ${answer,,} == q ]] && exit 0
 
-    ok=1
-    for domain in "$wg_domain" "$awg_domain"; do
-      found=$(resolve_a "$domain" | paste -sd, -)
-      if [[ ,$found, == *,$expected,* ]]; then
-        say "${green}✓${reset} $domain → $expected"
-      else
-        say "${red}✗${reset} $domain → ${found:-нет A-записи}; ожидался $expected"
-        ok=0
-      fi
-    done
-    [[ $ok -eq 1 ]] && return
-    say "${amber}DNS ещё не готов. Установка не начата.${reset}"
+  say "\n${cyan}Сначала направьте оба домена на этот сервер${reset}"
+  say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
+  say "на котором вы управляете своим доменом, и найдите раздел DNS."
+  say "\nСоздайте первую DNS-запись:"
+  say "  Тип записи:       A"
+  say "  Имя / Host:       $wg_name"
+  say "  IPv4 / Значение:  $expected"
+  say "  Результат:         $wg_domain → $expected"
+  say "\nСоздайте вторую DNS-запись:"
+  say "  Тип записи:       A"
+  say "  Имя / Host:       $awg_name"
+  say "  IPv4 / Значение:  $expected"
+  say "  Результат:         $awg_domain → $expected"
+  say "\nЕсли ваш домен находится в Cloudflare:"
+  say "  1. Откройте DNS → Records → Add record."
+  say "  2. Выберите Type: A."
+  say "  3. Заполните Name и IPv4 address значениями выше."
+  say "  4. Выключите Proxy status. Должно быть серое облако ${amber}DNS only${reset}."
+  say "  5. Нажмите Save. Повторите для второго домена."
+  say "\nУстановка продолжится только после двух успешных проверок."
+
+  while true; do
+    read -r -p "Нажмите Enter для проверки DNS (или введите q для выхода): " answer <"$tty"
+    [[ ${answer,,} == q ]] && exit 0
+    attempt=$((attempt + 1))
+    wg_ok=0
+    awg_ok=0
+
+    say "\nПроверка DNS №$attempt:"
+    found=$(resolve_a "$wg_domain" | paste -sd, -)
+    if [[ ,$found, == *,$expected,* ]]; then
+      say "  ${green}✓ WireGuard:${reset}  $wg_domain → $expected — правильно"
+      wg_ok=1
+    else
+      say "  ${red}✗ WireGuard:${reset}  $wg_domain → ${found:-запись не найдена}"
+      say "                 Нужно: $expected"
+    fi
+
+    found=$(resolve_a "$awg_domain" | paste -sd, -)
+    if [[ ,$found, == *,$expected,* ]]; then
+      say "  ${green}✓ AmneziaWG:${reset} $awg_domain → $expected — правильно"
+      awg_ok=1
+    else
+      say "  ${red}✗ AmneziaWG:${reset} $awg_domain → ${found:-запись не найдена}"
+      say "                 Нужно: $expected"
+    fi
+
+    if [[ $wg_ok -eq 1 && $awg_ok -eq 1 ]]; then
+      say "\n${green}Обе DNS-записи настроены правильно.${reset}"
+      return
+    fi
+
+    say "\n${amber}Пока правильны не обе записи, установка не начнётся.${reset}"
+    say "Исправьте отмеченную красным запись и запустите проверку ещё раз."
   done
 }
 
