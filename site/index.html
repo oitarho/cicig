@@ -33,10 +33,9 @@
       </a>
       <nav class="main-nav" aria-label="Основная навигация">
         <a href="#features" data-index="01">Возможности</a>
-        <a href="#comparison" data-index="02">Сравнение</a>
-        <a href="#architecture" data-index="03">Архитектура</a>
-        <a href="#requirements" data-index="04">Требования</a>
-        <a href="#install" data-index="05">Установка</a>
+        <a href="#architecture" data-index="02">Архитектура</a>
+        <a href="#requirements" data-index="03">Требования</a>
+        <a href="#install" data-index="04">Установка</a>
       </nav>
       <div class="nav-actions">
         <div class="language-switch" aria-label="Выбор языка"><a class="active" href="./" lang="ru">RU</a><a href="en/" lang="en">EN</a></div>
@@ -118,33 +117,9 @@
       </div>
     </section>
 
-    <section class="content-section comparison-section">
-      <div id="comparison" class="section-head">
-        <div><p class="section-kicker"><span>02</span> / СРАВНЕНИЕ</p><h2>cicig и <em>wg-easy</em></h2></div>
-        <p>Оба проекта самостоятельно размещаются на вашем сервере и решают задачу управления VPN-клиентами. Отличие cicig — одновременная работа с двумя протоколами.</p>
-      </div>
-
-      <div class="comparison-card">
-        <table class="comparison-table">
-          <thead><tr><th>Возможность</th><th><span class="product-name cicig-name">cicig</span></th><th><span class="product-name">wg-easy</span></th></tr></thead>
-          <tbody>
-            <tr><th scope="row">WireGuard</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
-            <tr><th scope="row">AmneziaWG</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="no">—</span></td></tr>
-            <tr class="comparison-highlight"><th scope="row">WG + AWG в одной панели</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="no">—</span></td></tr>
-            <tr><th scope="row">QR-коды</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
-            <tr><th scope="row">Конфиги клиентов</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
-            <tr><th scope="row">Срок действия доступа</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
-            <tr><th scope="row">Self-hosted</th><td data-label="cicig"><span class="yes">✓</span></td><td data-label="wg-easy"><span class="yes">✓</span></td></tr>
-          </tbody>
-        </table>
-        <div class="comparison-conclusion"><strong>Когда нужен cicig?</strong><p>Если нужен только WireGuard, существует много подходящих панелей. cicig особенно полезен, когда WireGuard и AmneziaWG должны работать одновременно — с общим списком пользователей и единым управлением.</p></div>
-        <p class="comparison-source">Возможности wg-easy проверены по <a href="https://github.com/wg-easy/wg-easy#features">официальному списку функций</a> и <a href="https://wg-easy.github.io/wg-easy/latest/guides/clients/">документации клиентов</a>.</p>
-      </div>
-    </section>
-
     <section class="content-section">
       <div id="architecture" class="section-head">
-        <div><p class="section-kicker"><span>03</span> / АРХИТЕКТУРА</p><h2>Понятная <em>архитектура</em></h2></div>
+        <div><p class="section-kicker"><span>02</span> / АРХИТЕКТУРА</p><h2>Понятная <em>архитектура</em></h2></div>
         <p>Публичен только HTTPS-вход панели и два UDP-порта. Клиентские данные и VPN-ключи остаются на вашем сервере.</p>
       </div>
 
@@ -162,7 +137,7 @@
 
     <section class="content-section">
       <div id="requirements" class="section-head">
-        <div><p class="section-kicker"><span>04</span> / ТРЕБОВАНИЯ</p><h2>Начните с <em>малого</em></h2></div>
+        <div><p class="section-kicker"><span>03</span> / ТРЕБОВАНИЯ</p><h2>Начните с <em>малого</em></h2></div>
         <p>Размер сервера выбирают по числу одновременных подключений и реальному трафику, а не по количеству выпущенных ключей.</p>
       </div>
 
@@ -188,7 +163,7 @@
 
     <section class="content-section">
       <div id="install" class="section-head">
-        <div><p class="section-kicker"><span>05</span> / УСТАНОВКА</p><h2>Три шага до <em>тоннеля</em></h2></div>
+        <div><p class="section-kicker"><span>04</span> / УСТАНОВКА</p><h2>Три шага до <em>тоннеля</em></h2></div>
         <p>Установщик сам проверяет DNS, ставит Docker, запускает сервисы и получает HTTPS-сертификат.</p>
       </div>
 
@@ -201,7 +176,7 @@
 
     <section class="content-section">
       <div id="clients" class="section-head">
-        <div><p class="section-kicker"><span>06</span> / ПРИЛОЖЕНИЯ</p><h2>Официальные <em>клиенты</em></h2></div>
+        <div><p class="section-kicker"><span>05</span> / ПРИЛОЖЕНИЯ</p><h2>Официальные <em>клиенты</em></h2></div>
         <p>Каждый конфиг открывается в приложении соответствующего протокола. Для каждого устройства создаётся отдельный ключ.</p>
       </div>
       <div class="client-rails">
