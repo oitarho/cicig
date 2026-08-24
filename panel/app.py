@@ -2,18 +2,19 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import sqlite3
 import subprocess
 import threading
 import time
-import unicodedata
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from pathlib import Path
-from urllib.parse import quote
 
 import bcrypt
 import requests
+import segno
 from flask import Flask, Response, flash, redirect, render_template, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -214,15 +215,39 @@ def safe_client_id(client_id: str) -> bool:
 
 
 def configuration_filename(name: str, client_id: str) -> str:
-    """Build an RFC 5987 Content-Disposition value with a Cyrillic UTF-8 name."""
-    normalized = unicodedata.normalize("NFC", name).strip()
-    cleaned = "".join(
-        character for character in normalized
-        if character.isprintable() and character not in {'/', '\\', '"', ';'}
-    ).strip(" .")[:80]
-    filename = f"{cleaned or client_id}.conf"
-    encoded = quote(filename, safe="")
-    return f'attachment; filename="client-{client_id}.conf"; filename*=UTF-8\'\'{encoded}'
+    """Use an ASCII transliteration accepted by strict WireGuard importers."""
+    cyrillic = {
+        "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "yo",
+        "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+        "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+        "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+        "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    }
+    transliterated = "".join(
+        (cyrillic.get(character.lower(), character).capitalize() if character.isupper()
+         else cyrillic.get(character, character))
+        for character in name.strip()
+    )
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", transliterated).strip("-._")[:80]
+    safe_name = slug or f"client-{client_id}"
+    return f'attachment; filename="{safe_name}.conf"'
+
+
+def rewrite_endpoint(configuration: bytes) -> bytes:
+    """Ensure downloaded and QR configurations always use the configured domain."""
+    text = configuration.decode("utf-8-sig")
+    domain = os.environ["VPN_DOMAIN"]
+    rewritten = re.sub(
+        r"(?m)^(\s*Endpoint\s*=\s*)(?:\[[^\]]+\]|[^:\r\n]+):(\d+)\s*$",
+        lambda match: f"{match.group(1)}{domain}:{match.group(2)}",
+        text,
+    )
+    return rewritten.encode("utf-8")
+
+
+def client_configuration(service: str, client_id: str) -> bytes:
+    upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/configuration")
+    return rewrite_endpoint(upstream.content)
 
 
 def perform_update() -> None:
@@ -424,11 +449,11 @@ def client_config(service: str, client_id: str):
         return "Некорректный запрос", 400
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     try:
-        upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/configuration")
-    except requests.RequestException as exc:
+        configuration = client_configuration(service, client_id)
+    except (requests.RequestException, UnicodeError) as exc:
         return f"Конфигурация недоступна: {exc}", 502
     disposition = configuration_filename(client.get("name", "") if client else "", client_id)
-    return Response(upstream.content, content_type="text/plain", headers={"Content-Disposition": disposition})
+    return Response(configuration, content_type="text/plain; charset=utf-8", headers={"Content-Disposition": disposition})
 
 
 @app.get("/clients/<service>/<client_id>/qr")
@@ -439,10 +464,12 @@ def client_qr(service: str, client_id: str):
     if service not in SERVICES or not safe_client_id(client_id):
         return "Некорректный запрос", 400
     try:
-        upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/qrcode.svg")
-    except requests.RequestException as exc:
+        configuration = client_configuration(service, client_id).decode("utf-8")
+        output = BytesIO()
+        segno.make(configuration, error="m", micro=False).save(output, kind="svg", scale=5, xmldecl=False)
+    except (requests.RequestException, UnicodeError, ValueError) as exc:
         return f"QR-код недоступен: {exc}", 502
-    return Response(upstream.content, content_type="image/svg+xml")
+    return Response(output.getvalue(), content_type="image/svg+xml")
 
 
 @app.get("/clients/<service>/<client_id>")
