@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050a08">
+  <title>{% block title %}cicig{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block styles %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <header class="shell-nav">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="cicig — главная">
+      <span class="brand-mark"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt=""></span>
+      <span class="brand-copy"><strong>CICIG</strong><small>dual tunnel control</small></span>
+    </a>
+
+    <nav class="primary-nav" aria-label="Основная навигация">
+      <a class="nav-link {% if active_page == 'keys' %}active{% endif %}" href="{{ url_for('index') }}">
+        <span class="nav-index">01</span><span><b>Ключи</b><small>access vault</small></span>
+      </a>
+      <a class="nav-link {% if active_page == 'system' %}active{% endif %}" href="{{ url_for('system') }}">
+        <span class="nav-index">02</span><span><b>Узлы</b><small>node control</small></span>
+      </a>
+    </nav>
+
+    <div class="shell-foot">
+      <p class="node-signal"><i></i><span>NODE LINK</span><b>ENCRYPTED</b></p>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf" value="{{ session.csrf }}">
+        <button class="nav-logout"><span>×</span> Стереть сессию</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="shell-main">
+    <div class="page-coordinate" aria-hidden="true">CICIG // {{ '01' if active_page == 'keys' else '02' }}</div>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

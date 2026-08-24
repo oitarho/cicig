@@ -1,12 +1,69 @@
-<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ client.name }} — cicig</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}"></head>
-<body><header><a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"><div><strong>cicig_</strong><span>root console // VPN</span></div></a><nav><a class="active" href="{{ url_for('index') }}">Ключи</a><a href="{{ url_for('system') }}">Узлы и патчи</a></nav><form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Стереть сессию</button></form></header>
-<main class="detail-wrap"><a class="back" href="{{ url_for('index') }}#clients">← Вернуться в базу агентов</a>
-{% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
-<section class="client-detail"><div class="detail-info"><div class="detail-title"><span class="service-icon {{ service }}">{{ service_meta.short }}</span><div><h1>{{ client.name }}</h1><p>{{ service_meta.title }} · {{ client.address }}</p></div><span class="badge {{ client.subscription }}">{{ {'active':'агент в строю','expiring':'таймер мигает','expired':'доступ сгорел','disabled':'канал закрыт'}[client.subscription] }}</span></div>
-{% if client.note %}<p class="client-note">{{ client.note }}</p>{% endif %}
-<dl class="facts"><div><dt>Сигнал на радаре</dt><dd>{{ {'online':'Агент на линии','recent':'Недавно подавал сигнал','offline':'Залёг на дно'}[client.connection] }}</dd></div><div><dt>Таймер доступа</dt><dd>{{ client.expires_label }}</dd></div><div><dt>Завербован</dt><dd>{{ client.created_label }}</dd></div><div><dt>Скачал / отдал</dt><dd>{{ client.transfer_rx_h }} / {{ client.transfer_tx_h }}</dd></div><div class="full"><dt>Криптографический отпечаток // public key</dt><dd><code>{{ client.publicKey }}</code></dd></div></dl>
-<div class="detail-section"><h3>Забрать ключ из сейфа</h3><a class="primary-link" href="{{ url_for('client_config', service=service, client_id=client.id) }}">Скачать добычу .conf</a></div>
-<div class="detail-section"><h3>Обезвредить таймер</h3><form class="inline-form" method="post" action="{{ url_for('client_extend', service=service, client_id=client.id) }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><select name="months"><option value="1">+1 месяц</option><option value="3" selected>+3 месяца</option><option value="6">+6 месяцев</option><option value="12">+1 год</option></select><button>Продлить миссию</button></form></div>
-<div class="detail-section"><h3>Пульт управления агентом</h3><div class="inline-form"><form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">{{ 'Оборвать канал' if client.enabled else 'Вернуть на линию' }}</button></form><form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Замести все следы агента? Ключ перестанет работать, отката не будет."><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="danger-button">Замести следы</button></form></div></div></div>
-<aside class="qr-card"><img src="{{ url_for('client_qr', service=service, client_id=client.id) }}" alt="QR-код"><p>Навести сканер {{ service_meta.title }}</p></aside></section></main><script src="{{ url_for('static', filename='app.js') }}" defer></script></body></html>
+{% extends "base.html" %}
+{% set active_page = "keys" %}
+
+{% block title %}{{ client.name }} — cicig{% endblock %}
+{% block body_class %}page-client{% endblock %}
+
+{% block content %}
+  <a class="back-link" href="{{ url_for('index') }}#clients"><span>←</span> Реестр ключей</a>
+
+  {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
+
+  <section class="dossier-head">
+    <div>
+      <p class="section-code"><span>ID</span> / CLIENT_DOSSIER</p>
+      <h1>{{ client.name }}</h1>
+      <p>{{ service_meta.title }} <i>/</i> {{ client.address }}</p>
+    </div>
+    <span class="state-tag large {{ client.subscription }}">{{ {'active':'активен','expiring':'скоро сгорит','expired':'срок истёк','disabled':'отключён'}[client.subscription] }}</span>
+  </section>
+
+  <div class="dossier-grid">
+    <section class="dossier-sheet">
+      {% if client.note %}<div class="dossier-note"><span>NOTE</span><p>{{ client.note }}</p></div>{% endif %}
+
+      <dl class="facts">
+        <div><dt>01 / Сигнал</dt><dd><span class="signal {{ client.connection }}"></span>{{ {'online':'На линии','recent':'Недавно в сети','offline':'Офлайн'}[client.connection] }}</dd></div>
+        <div><dt>02 / Срок доступа</dt><dd>{{ client.expires_label }}</dd></div>
+        <div><dt>03 / Создан</dt><dd>{{ client.created_label }}</dd></div>
+        <div><dt>04 / Трафик RX / TX</dt><dd>{{ client.transfer_rx_h }} / {{ client.transfer_tx_h }}</dd></div>
+        <div class="full"><dt>05 / Public key</dt><dd><code>{{ client.publicKey }}</code></dd></div>
+      </dl>
+
+      <div class="control-bay">
+        <section>
+          <span class="control-index">A</span><div><h2>Конфигурация</h2><p>Готовый файл для {{ service_meta.title }}.</p></div>
+          <a class="primary-action" href="{{ url_for('client_config', service=service, client_id=client.id) }}"><span>↓</span> Скачать .conf</a>
+        </section>
+        <section>
+          <span class="control-index">B</span><div><h2>Продлить доступ</h2><p>Новый срок начнётся после текущего.</p></div>
+          <form class="inline-form" method="post" action="{{ url_for('client_extend', service=service, client_id=client.id) }}">
+            <input type="hidden" name="csrf" value="{{ session.csrf }}">
+            <select name="months"><option value="1">+1 месяц</option><option value="3" selected>+3 месяца</option><option value="6">+6 месяцев</option><option value="12">+1 год</option></select>
+            <button>Продлить</button>
+          </form>
+        </section>
+        <section class="danger-zone">
+          <span class="control-index">C</span><div><h2>Управление</h2><p>Остановить или удалить этот ключ.</p></div>
+          <div class="inline-form">
+            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}">
+              <input type="hidden" name="csrf" value="{{ session.csrf }}">
+              <button class="secondary-action">{{ 'Отключить' if client.enabled else 'Включить' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Удалить клиента? Ключ перестанет работать, отката не будет.">
+              <input type="hidden" name="csrf" value="{{ session.csrf }}">
+              <button class="danger-action">Удалить</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <aside class="qr-sheet">
+      <div class="qr-ticket-head"><span>{{ service_meta.short }}</span><div><b>SCAN TO IMPORT</b><small>{{ service_meta.title }}</small></div></div>
+      <div class="qr-frame"><img src="{{ url_for('client_qr', service=service, client_id=client.id) }}" alt="QR-код конфигурации"></div>
+      <p>Наведите камеру из VPN-клиента</p>
+      <code>{{ client.address }}</code>
+    </aside>
+  </div>
+{% endblock %}

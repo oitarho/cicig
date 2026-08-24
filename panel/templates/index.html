@@ -1,79 +1,117 @@
-<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>cicig — управление VPN</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='sale.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}">
-</head>
-<body>
-<header>
-  <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"><div><strong>cicig_</strong><span>root console // VPN</span></div></a>
-  <nav><a class="active" href="{{ url_for('index') }}">Ключи</a><a href="{{ url_for('system') }}">Узлы и патчи</a></nav>
-  <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Стереть сессию</button></form>
-</header>
+{% extends "base.html" %}
+{% set active_page = "keys" %}
 
-<main>
-  {% for category, message in get_flashed_messages(with_categories=true) %}{% if category == 'sale' %}<div class="sale-toast" role="status"><button type="button" class="sale-close" data-dismiss aria-label="Закрыть">×</button><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"><div><span>ACCESS GRANTED // PROFIT +1</span><strong>{{ message }}</strong><small>Ещё один человек ушёл в зашифрованный тоннель 😼</small></div></div>{% else %}<div class="notice {{ category }}">{{ message }}</div>{% endif %}{% endfor %}
+{% block title %}Ключи доступа — cicig{% endblock %}
+{% block body_class %}page-vault{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='sale.css') }}">{% endblock %}
 
-  <section id="clients" class="compact-top"><div><p class="eyebrow">root@cicig:/vault/keys</p><h1>VPN-доступы<span class="cursor">_</span></h1></div><div class="compact-metrics"><span><b>{{ total_clients }}</b> всего</span><span><b>{{ enabled_clients }}</b> в строю</span><span><b>{{ counts.connection.online }}</b> онлайн</span></div><button type="button" data-open-dialog="create-client">+ Выпустить ключ</button></section>
+{% block content %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    {% if category == 'sale' %}
+      <div class="sale-toast" role="status">
+        <button type="button" class="sale-close" data-dismiss aria-label="Закрыть">×</button>
+        <div class="sale-visual"><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"></div>
+        <div class="sale-copy"><span>KEY DEPLOYED // PROFIT +1</span><strong>{{ message }}</strong><small>Туннель продан. Кот доволен.</small></div>
+      </div>
+    {% else %}
+      <div class="notice {{ category }}">{{ message }}</div>
+    {% endif %}
+  {% endfor %}
 
-  <form class="filters" method="get" action="{{ url_for('index') }}#clients">
-    <input class="search" type="search" name="q" value="{{ query }}" placeholder="Пробить агента: имя, IP или public key…">
-    <select name="service" data-autosubmit><option value="all">Оба VPN</option><option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option><option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option></select>
-    <button>Пробить базу</button><a class="reset" href="{{ url_for('index') }}#clients">Стереть фильтры</a>
-    <div class="filter-row"><span>Таймер</span>
-      {% for key, label in [('all','Весь сейф'),('active','В строю'),('expiring','Таймер мигает'),('expired','Сгорели'),('disabled','Канал закрыт')] %}<a class="chip {% if subscription_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ key }}&connection={{ connection_filter }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.subscription[key] }}</b></a>{% endfor %}
+  <section id="clients" class="vault-head">
+    <div class="title-block">
+      <p class="section-code"><span>01</span> / ACCESS_VAULT</p>
+      <h1>Ключи <em>доступа</em></h1>
+      <p>WireGuard и AmneziaWG в одном реестре.</p>
     </div>
-    <div class="filter-row"><span>Радар</span>
-      {% for key, label in [('all','Весь эфир'),('online','На линии'),('recent','Подавали сигнал'),('offline','Залегли на дно')] %}<a class="chip {% if connection_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ subscription_filter }}&connection={{ key }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.connection[key] }}</b></a>{% endfor %}
+    <div class="readout-grid" aria-label="Статистика клиентов">
+      <article><small>всего</small><strong>{{ total_clients }}</strong><i>ALL</i></article>
+      <article><small>активны</small><strong>{{ enabled_clients }}</strong><i>LIVE</i></article>
+      <article><small>в сети</small><strong>{{ counts.connection.online }}</strong><i>NOW</i></article>
+    </div>
+    <button type="button" class="primary-action" data-open-dialog="create-client"><span>＋</span> Выпустить ключ</button>
+  </section>
+
+  <form class="filter-console" method="get" action="{{ url_for('index') }}#clients">
+    <div class="search-line">
+      <label class="search-field"><span>⌕</span><input type="search" name="q" value="{{ query }}" placeholder="Имя, IP или public key…" aria-label="Поиск клиентов"></label>
+      <select name="service" data-autosubmit aria-label="VPN-протокол">
+        <option value="all">Оба протокола</option>
+        <option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option>
+        <option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option>
+      </select>
+      <button class="search-button">Найти</button>
+      <a class="reset" href="{{ url_for('index') }}#clients">Сбросить</a>
+    </div>
+    <div class="filter-line">
+      <span class="filter-label">Доступ</span>
+      {% for key, label in [('all','Все'),('active','В строю'),('expiring','Скоро сгорят'),('expired','Сгорели'),('disabled','Отключены')] %}
+        <a class="filter-token {% if subscription_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ key }}&connection={{ connection_filter }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.subscription[key] }}</b></a>
+      {% endfor %}
+    </div>
+    <div class="filter-line">
+      <span class="filter-label">Сигнал</span>
+      {% for key, label in [('all','Любой'),('online','Онлайн'),('recent','Недавно'),('offline','Офлайн')] %}
+        <a class="filter-token {% if connection_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ subscription_filter }}&connection={{ key }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.connection[key] }}</b></a>
+      {% endfor %}
     </div>
   </form>
 
-  <div class="client-groups">
-  {% for service, items in clients.items() %}
-    <section class="client-group">
-      <div class="group-title"><div><span class="service-icon {{ service }}">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span><div><h3>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h3><p>{{ endpoints[service] }}</p></div></div><span>{{ items|length }} агентов</span></div>
-      {% if items %}
-      <div class="client-list">
-        {% for client in items %}
-        <article class="client-row">
-          <a class="client-main" href="{{ url_for('client_detail', service=service, client_id=client.id) }}"><span class="dot {{ client.connection }}"></span><div><strong>{{ client.name }}</strong><small>{{ client.address }} · {{ client.note or client.service_title }}</small></div></a>
-          <div class="traffic"><span>↓ {{ client.transfer_rx_h }}</span><span>↑ {{ client.transfer_tx_h }}</span></div>
-          <div class="client-state"><span class="badge {{ client.subscription }}">{{ {'active':'в строю','expiring':'таймер мигает','expired':'доступ сгорел','disabled':'канал закрыт'}[client.subscription] }}</span><small>{{ client.expires_label }}</small></div>
-          <div class="client-actions">
-            <a class="icon-button" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="QR-код">QR</a>
-            <a class="icon-button" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
-            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button" title="{{ 'Отключить' if client.enabled else 'Включить' }}">{{ 'OFF' if client.enabled else 'ON' }}</button></form>
-            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Замести следы агента? Конфиг умрёт сразу, отката не будет."><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button danger" title="Замести следы">DEL</button></form>
+  <div class="tunnel-stack">
+    {% for service, items in clients.items() %}
+      <section class="tunnel-ledger {{ service }}">
+        <header class="protocol-head">
+          <div class="protocol-identity">
+            <span class="protocol-mark">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span>
+            <div><p>{{ 'TUNNEL_A' if service == 'wg-easy' else 'TUNNEL_B' }}</p><h2>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h2></div>
           </div>
-        </article>
-        {% endfor %}
-      </div>
-      {% else %}<div class="empty">Хранилище пусто. Выпустите первый ключ — коту нужны монеты.</div>{% endif %}
-    </section>
-  {% endfor %}
+          <code>{{ endpoints[service] }}</code>
+          <span class="protocol-count"><b>{{ items|length }}</b> ключей</span>
+        </header>
+
+        {% if items %}
+          <div class="ledger-labels" aria-hidden="true"><span>Клиент</span><span>Трафик</span><span>Статус</span><span>Команды</span></div>
+          <div class="client-list">
+            {% for client in items %}
+              <article class="client-row">
+                <a class="client-main" href="{{ url_for('client_detail', service=service, client_id=client.id) }}">
+                  <span class="signal {{ client.connection }}"></span>
+                  <span class="client-copy"><strong>{{ client.name }}</strong><small>{{ client.address }} <i>/</i> {{ client.note or client.service_title }}</small></span>
+                </a>
+                <div class="traffic"><span><small>RX</small>{{ client.transfer_rx_h }}</span><span><small>TX</small>{{ client.transfer_tx_h }}</span></div>
+                <div class="client-state"><span class="state-tag {{ client.subscription }}">{{ {'active':'активен','expiring':'скоро сгорит','expired':'срок истёк','disabled':'отключён'}[client.subscription] }}</span><small>{{ client.expires_label }}</small></div>
+                <div class="client-actions">
+                  <a class="row-command" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="Открыть QR-код">QR</a>
+                  <a class="row-command" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
+                  <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}">
+                    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+                    <button class="row-command" title="{{ 'Отключить' if client.enabled else 'Включить' }}">{{ 'OFF' if client.enabled else 'ON' }}</button>
+                  </form>
+                  <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Удалить клиента? Его конфигурация перестанет работать сразу.">
+                    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+                    <button class="row-command danger" title="Удалить клиента">DEL</button>
+                  </form>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state"><span>∅</span><p>Здесь пока нет ключей.</p><small>Выберите «Выпустить ключ», чтобы открыть первый доступ.</small></div>
+        {% endif %}
+      </section>
+    {% endfor %}
   </div>
 
-</main>
-
-<dialog id="create-client">
-  <form method="post" action="{{ url_for('create_client') }}">
-    <input type="hidden" name="csrf" value="{{ session.csrf }}">
-    <div class="dialog-head"><div><p class="eyebrow">keygen --new</p><h2>Выпустить VPN-ключ</h2></div><button type="button" class="close" data-close-dialog>×</button></div>
-    <label>Выбрать тоннель<select name="service" required><option value="wg-easy">WireGuard // классика</option><option value="awg-easy">AmneziaWG // режим ниндзя</option></select></label>
-    <label>Позывной агента<input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
-    <label>Таймер самоуничтожения<select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
-    <label>Записка в досье<input name="note" maxlength="200" placeholder="Устройство, владелец или секретная пометка"></label>
-    <p class="hint">После keygen заберите `.conf` или просканируйте JPEG QR из карточки агента.</p>
-    <button class="wide">Сгенерировать и продать 😼</button>
-  </form>
-</dialog>
-<script src="{{ url_for('static', filename='app.js') }}" defer></script>
-</body>
-</html>
+  <dialog id="create-client" class="keygen-dialog">
+    <form method="post" action="{{ url_for('create_client') }}">
+      <input type="hidden" name="csrf" value="{{ session.csrf }}">
+      <div class="dialog-head"><div><p class="section-code"><span>＋</span> / KEYGEN</p><h2>Новый ключ</h2></div><button type="button" class="dialog-close" data-close-dialog aria-label="Закрыть">×</button></div>
+      <label><span>01 / Протокол</span><select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
+      <label><span>02 / Имя клиента</span><input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
+      <label><span>03 / Срок доступа</span><select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
+      <label><span>04 / Заметка</span><input name="note" maxlength="200" placeholder="Устройство или владелец"></label>
+      <p class="form-hint">После создания будут доступны файл `.conf` и JPEG QR-код.</p>
+      <button class="primary-action wide"><span>↳</span> Создать доступ</button>
+    </form>
+  </dialog>
+{% endblock %}

@@ -1,8 +1,32 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>cicig — вход</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='mobile.css') }}"></head>
-<body><main class="login"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="cicig">
-<p class="terminal-line">root@cicig:~$ authorize<span class="cursor">_</span></p><h1>cicig_</h1><p>Закрытый контур управления WireGuard и AmneziaWG</p>
-{% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
-<form method="post"><input type="hidden" name="csrf" value="{{ session.csrf }}"><label>Мастер-пароль от кошачьего сейфа<input type="password" name="password" maxlength="128" autocomplete="current-password" required autofocus></label><button>Войти в матрицу</button></form>
-</main></body></html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050a08">
+  <title>Вход — cicig</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-page">
+  <main class="gate-layout">
+    <section class="gate-brand">
+      <p class="gate-coordinate">CICIG_GATE / 00</p>
+      <div class="gate-cat"><span class="cat-ear left"></span><span class="cat-ear right"></span><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"></div>
+      <div class="gate-wordmark"><span>DUAL TUNNEL</span><h1>CICIG</h1><p>WireGuard <i>×</i> AmneziaWG</p></div>
+      <div class="gate-status"><span><i></i> NODE READY</span><span>ACCESS // RESTRICTED</span></div>
+    </section>
+
+    <section class="gate-console">
+      <div class="gate-console-head"><span>AUTH_01</span><b>ENCRYPTED ENTRY</b></div>
+      <div class="gate-intro"><p class="section-code"><span>↳</span> / AUTHORIZE</p><h2>Вход в панель</h2><p>Введите мастер-пароль администратора.</p></div>
+      {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
+      <form method="post" class="login-form">
+        <input type="hidden" name="csrf" value="{{ session.csrf }}">
+        <label><span>MASTER_PASSWORD</span><input type="password" name="password" maxlength="128" autocomplete="current-password" placeholder="••••••••••••" required autofocus></label>
+        <button class="primary-action wide"><span>→</span> Открыть контур</button>
+      </form>
+      <p class="gate-footnote"><span>◈</span> Сессия защищена и ограничена по времени.</p>
+    </section>
+  </main>
+</body>
+</html>
