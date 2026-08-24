@@ -119,9 +119,14 @@ def save_settings(settings: dict) -> None:
 
 
 def docker(*args: str, timeout: int = 30) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["docker", *args], capture_output=True, text=True, timeout=timeout, check=False
-    )
+    try:
+        return subprocess.run(
+            ["docker", *args], capture_output=True, text=True, timeout=timeout, check=False
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return subprocess.CompletedProcess(
+            ["docker", *args], 127, "", f"docker unavailable: {error}"
+        )
 
 
 def service_status(name: str) -> dict:
