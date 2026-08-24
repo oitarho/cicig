@@ -367,6 +367,21 @@ dialog { color: var(--text); }
 .inline-form { display: flex; align-items: center; gap: 7px; }
 .inline-form select { min-height: 40px; }
 .inline-form button:not(.secondary-action):not(.danger-action) { min-height: 40px; padding: 10px 14px; background: var(--acid); color: #00180b; }
+.network-zone { background: linear-gradient(90deg, transparent, rgb(22 217 207 / 4%)); }
+.network-policy-form { display: grid; grid-template-columns: minmax(205px, 1fr) 150px auto; align-items: end; gap: 9px; }
+.policy-switch { min-height: 42px; }
+.speed-limit-field { display: grid; grid-template-columns: 1fr auto; align-items: center; min-width: 150px; }
+.speed-limit-field > span { grid-column: 1/-1; margin-bottom: 4px; color: var(--muted); font-size: 7px; letter-spacing: .08em; text-transform: uppercase; }
+.speed-limit-field input { width: 92px; min-height: 38px; }
+.speed-limit-field b { padding: 0 8px; color: var(--muted); font-size: 8px; }
+.network-policy-form .secondary-action { min-height: 40px; white-space: nowrap; }
+.policy-disclaimer, .policy-sync { grid-column: 2/4; margin: -4px 0 0; color: var(--muted); font-size: 7px; line-height: 1.5; }
+.policy-sync { display: flex; align-items: center; gap: 7px; margin-top: 0; color: var(--dim); }
+.policy-sync i { width: 6px; height: 6px; background: var(--amber); box-shadow: 0 0 8px var(--amber); transform: rotate(45deg); }
+.policy-sync.success { color: var(--acid); }
+.policy-sync.success i { background: var(--acid); box-shadow: 0 0 8px var(--acid); }
+.policy-sync.failed { color: var(--danger); }
+.policy-sync.failed i { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
 .danger-zone { background: linear-gradient(90deg, transparent, rgb(255 84 112 / 4%)); }
 .qr-sheet { position: relative; border: 1px solid var(--amber); background: #f5f2e8; color: #06100b; box-shadow: 9px 9px 0 var(--amber-dark); }
 .qr-sheet::before, .qr-sheet::after { content: ""; position: absolute; left: 22px; right: 22px; height: 1px; background: repeating-linear-gradient(90deg, #0b1711 0 7px, transparent 7px 12px); }
@@ -551,6 +566,8 @@ dialog { color: var(--text); }
   .control-bay > section { grid-template-columns: 28px 1fr; padding: 14px; }
   .control-bay > section > :last-child { grid-column: 2; justify-self: start; }
   .inline-form { flex-wrap: wrap; }
+  .network-policy-form, .policy-disclaimer, .policy-sync { grid-column: 2; width: 100%; }
+  .network-policy-form { grid-template-columns: minmax(190px, 1fr) 150px auto; }
   .system-head { align-items: start; }
   .system-stamp { min-width: 115px; }
   .system-stamp strong { font-size: 32px; }
@@ -586,6 +603,9 @@ dialog { color: var(--text); }
   .state-tag.large { justify-self: start; }
   .system-stamp { display: none; }
   .qr-sheet { width: 100%; }
+  .network-policy-form { grid-template-columns: 1fr; align-items: stretch; }
+  .network-policy-form .secondary-action { width: 100%; }
+  .speed-limit-field { justify-content: start; }
   .gate-status span:last-child { display: none; }
 }
 

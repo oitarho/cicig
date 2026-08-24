@@ -42,3 +42,7 @@ jobs:
             -v "$PWD/tests:/tests:ro" \
             cicig-panel:test \
             python -m unittest discover -s /tests -v
+      - name: Build VPN policy images
+        run: |
+          docker build -t cicig-wg:test -f vpn/wg/Dockerfile .
+          docker build -t cicig-awg:test -f vpn/awg/Dockerfile .

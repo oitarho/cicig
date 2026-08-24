@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import re
@@ -25,6 +26,8 @@ DB_FILE = DATA_DIR / "cicig.db"
 STATUS_FILE = CONTROL_DIR / "status.json"
 UPDATE_REQUEST_FILE = CONTROL_DIR / "update.request"
 UPDATE_STATUS_FILE = CONTROL_DIR / "update-status.json"
+NETWORK_POLICY_DIR = CONTROL_DIR / "network-policies"
+NETWORK_POLICY_STATUS_FILE = CONTROL_DIR / "network-policy-status.json"
 LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = 15 * 60
 SERVICES = {
@@ -62,10 +65,24 @@ def db_connection() -> sqlite3.Connection:
         client_id TEXT NOT NULL,
         expires_at TEXT,
         note TEXT NOT NULL DEFAULT '',
+        p2p_blocked INTEGER NOT NULL DEFAULT 0,
+        download_limit_mbps INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         PRIMARY KEY(service, client_id)
         )"""
     )
+    columns = {
+        str(row["name"])
+        for row in connection.execute("PRAGMA table_info(client_meta)").fetchall()
+    }
+    if "p2p_blocked" not in columns:
+        connection.execute(
+            "ALTER TABLE client_meta ADD COLUMN p2p_blocked INTEGER NOT NULL DEFAULT 0"
+        )
+    if "download_limit_mbps" not in columns:
+        connection.execute(
+            "ALTER TABLE client_meta ADD COLUMN download_limit_mbps INTEGER NOT NULL DEFAULT 0"
+        )
     connection.commit()
     return connection
 
@@ -93,6 +110,69 @@ def delete_client_meta(service: str, client_id: str) -> None:
     with db_connection() as connection:
         connection.execute("DELETE FROM client_meta WHERE service=? AND client_id=?", (service, client_id))
         connection.commit()
+
+
+def client_ipv4(address: str) -> str:
+    """Return a normalized client IPv4 address safe for firewall and tc rules."""
+    candidate = str(address or "").split(",", 1)[0].strip().split("/", 1)[0]
+    parsed = ipaddress.ip_address(candidate)
+    if parsed.version != 4:
+        raise ValueError("client has no IPv4 address")
+    return str(parsed)
+
+
+def save_client_network_settings(
+    service: str, client_id: str, p2p_blocked: bool, download_limit_mbps: int
+) -> None:
+    with db_connection() as connection:
+        connection.execute(
+            """INSERT INTO client_meta(
+                service,client_id,expires_at,note,p2p_blocked,download_limit_mbps,created_at
+            ) VALUES(?,?,?,?,?,?,?) ON CONFLICT(service,client_id) DO UPDATE SET
+                p2p_blocked=excluded.p2p_blocked,
+                download_limit_mbps=excluded.download_limit_mbps""",
+            (
+                service,
+                client_id,
+                None,
+                "",
+                int(p2p_blocked),
+                download_limit_mbps,
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        connection.commit()
+
+
+def network_policy_path(service: str, client_id: str) -> Path:
+    if service not in SERVICES or not safe_client_id(client_id):
+        raise ValueError("invalid policy identity")
+    return NETWORK_POLICY_DIR / f"{service}--{client_id}.policy"
+
+
+def write_network_policy(
+    service: str,
+    client_id: str,
+    address: str,
+    p2p_blocked: bool,
+    download_limit_mbps: int,
+) -> None:
+    ip = client_ipv4(address)
+    NETWORK_POLICY_DIR.mkdir(parents=True, exist_ok=True)
+    target = network_policy_path(service, client_id)
+    temporary = target.with_suffix(".tmp")
+    temporary.write_text(
+        f"active|{ip}|{int(p2p_blocked)}|{download_limit_mbps}\n",
+        encoding="ascii",
+    )
+    temporary.replace(target)
+
+
+def remove_network_policy(service: str, client_id: str) -> None:
+    try:
+        network_policy_path(service, client_id).unlink()
+    except FileNotFoundError:
+        pass
 
 
 def parse_datetime(value) -> datetime | None:
@@ -196,6 +276,13 @@ def clients_for(service: str) -> list[dict]:
         client["connection"] = connection
         client["subscription"] = subscription
         client["note"] = metadata.get("note", "")
+        client["p2p_blocked"] = bool(metadata.get("p2p_blocked", 0))
+        try:
+            client["download_limit_mbps"] = max(
+                0, int(metadata.get("download_limit_mbps", 0))
+            )
+        except (TypeError, ValueError):
+            client["download_limit_mbps"] = 0
     return clients
 
 
@@ -287,6 +374,26 @@ def current_update_state() -> dict:
         current["running"] = True
         current["result"] = update_state["result"] or "Запрос ожидает изолированный контроллер."
     return current
+
+
+def current_network_policy_state() -> dict:
+    default = {
+        "state": "pending",
+        "message": "Контроллер ещё не прислал отметку.",
+        "updated_at": "",
+    }
+    try:
+        saved = json.loads(NETWORK_POLICY_STATUS_FILE.read_text(encoding="utf-8"))
+        state = str(saved.get("state", "pending"))
+        if state not in {"success", "failed", "pending"}:
+            state = "pending"
+        return {
+            "state": state,
+            "message": str(saved.get("message", default["message"]))[:240],
+            "updated_at": str(saved.get("updated_at", ""))[:80],
+        }
+    except (OSError, ValueError, TypeError):
+        return default
 
 
 def auto_update_loop() -> None:
@@ -519,6 +626,7 @@ def client_action(service: str, client_id: str, action: str):
         elif action == "delete":
             api_call(service, "DELETE", f"/wireguard/client/{client_id}")
             delete_client_meta(service, client_id)
+            remove_network_policy(service, client_id)
             flash("Следы заметены: клиент удалён", "success")
         else:
             return "Неизвестное действие", 404
@@ -575,7 +683,58 @@ def client_detail(service: str, client_id: str):
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     if not client:
         return "Такого агента нет в базе", 404
-    return render_template("client.html", client=client, service=service, service_meta=SERVICES[service])
+    return render_template(
+        "client.html",
+        client=client,
+        service=service,
+        service_meta=SERVICES[service],
+        policy_state=current_network_policy_state(),
+    )
+
+
+@app.post("/clients/<service>/<client_id>/network")
+def client_network(service: str, client_id: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if not valid_csrf() or service not in SERVICES or not safe_client_id(client_id):
+        return "Некорректный запрос", 400
+    try:
+        download_limit_mbps = int(request.form.get("download_limit_mbps", "0"))
+    except ValueError:
+        return "Лимит скорости должен быть целым числом", 400
+    if download_limit_mbps < 0 or download_limit_mbps > 1000:
+        return "Лимит скорости должен быть от 0 до 1000 Мбит/с", 400
+    client = next(
+        (item for item in clients_for(service) if str(item.get("id")) == client_id),
+        None,
+    )
+    if not client:
+        return "Такого агента нет в базе", 404
+    p2p_blocked = request.form.get("p2p_blocked") == "on"
+    try:
+        write_network_policy(
+            service,
+            client_id,
+            str(client.get("address", "")),
+            p2p_blocked,
+            download_limit_mbps,
+        )
+        save_client_network_settings(
+            service, client_id, p2p_blocked, download_limit_mbps
+        )
+    except (OSError, ValueError, sqlite3.Error) as exc:
+        app.logger.error("Failed to save client network policy: %s", exc)
+        flash("Сетевой ошейник не застегнулся: проверьте журнал панели", "error")
+    else:
+        speed = (
+            f"до {download_limit_mbps} Мбит/с"
+            if download_limit_mbps
+            else "без лимита"
+        )
+        p2p = "P2P закрыт" if p2p_blocked else "P2P разрешён"
+        flash(f"Сетевой профиль сохранён: {p2p}, скачивание {speed}", "success")
+    return redirect(url_for("client_detail", service=service, client_id=client_id))
 
 
 @app.post("/clients/<service>/<client_id>/extend")

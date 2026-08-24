@@ -35,12 +35,15 @@
 | Ready-to-share access | Downloadable `.conf` files and QR codes |
 | Expiration control | Expiration dates, filters, and automatic disabling |
 | Connection status | Online state, latest handshake, and traffic usage |
+| Per-client limits | P2P filtering and an individual 0–1000 Mbps download limit |
 | Domain-based endpoints | Client configurations use your domain instead of an IP address |
 | One-command setup | Docker, HTTPS, the panel, and both VPN services are deployed automatically |
 | Full-system updates | Manual or automatic updates for the code and containers |
 | Mobile-friendly UI | A compact responsive interface |
 
 Only the administrator can access the panel. A client receives a ready configuration file or QR code without access to the server internals.
+
+The speed limit applies to downloads through the selected VPN key. The P2P filter blocks common BitTorrent ports and recognizable signatures, but it is not DPI: fully obfuscated traffic on random ports may still pass.
 
 ## Installation
 

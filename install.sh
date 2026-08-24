@@ -177,7 +177,8 @@ EOF
 
 cd "$CICIG_DIR"
 docker compose config --quiet
-docker compose pull caddy wg-easy awg-easy
+docker compose pull caddy
+docker compose build --pull wg-easy awg-easy
 say "${cyan}[ ЭТАП 4/4 ] Выпускаю зашифрованные тоннели в сеть${reset}"
 docker compose up -d --build
 

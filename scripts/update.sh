@@ -53,7 +53,8 @@ cd "$PROJECT_DIR"
 echo "Проверка конфигурации…"
 docker compose config --quiet
 echo "Загрузка контейнеров…"
-docker compose pull
+docker compose pull caddy
+docker compose build --pull
 echo "Пересборка и запуск всей системы…"
 docker compose up -d --build --remove-orphans
 if [ -d "$AWG_BACKUP" ] && [ "$(find "$AWG_BACKUP" -mindepth 1 -print -quit)" ]; then

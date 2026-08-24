@@ -27,7 +27,9 @@
         <div><dt>02 / Срок доступа</dt><dd>{{ client.expires_label }}</dd></div>
         <div><dt>03 / Создан</dt><dd>{{ client.created_label }}</dd></div>
         <div><dt>04 / Трафик RX / TX</dt><dd>{{ client.transfer_rx_h }} / {{ client.transfer_tx_h }}</dd></div>
-        <div class="full"><dt>05 / Public key</dt><dd><code>{{ client.publicKey }}</code></dd></div>
+        <div><dt>05 / P2P-фильтр</dt><dd>{{ 'Торренты закрыты' if client.p2p_blocked else 'Торренты разрешены' }}</dd></div>
+        <div><dt>06 / Скорость скачивания</dt><dd>{{ (client.download_limit_mbps ~ ' Мбит/с') if client.download_limit_mbps else 'Без лимита' }}</dd></div>
+        <div class="full"><dt>07 / Public key</dt><dd><code>{{ client.publicKey }}</code></dd></div>
       </dl>
 
       <div class="control-bay">
@@ -43,8 +45,31 @@
             <button>Продлить</button>
           </form>
         </section>
+        <section class="network-zone">
+          <span class="control-index">C</span>
+          <div>
+            <h2>Сетевой ошейник</h2>
+            <p>Фильтр P2P и потолок скорости скачивания для этого ключа.</p>
+          </div>
+          <form class="network-policy-form" method="post" action="{{ url_for('client_network', service=service, client_id=client.id) }}">
+            <input type="hidden" name="csrf" value="{{ session.csrf }}">
+            <label class="switch-line policy-switch">
+              <input type="checkbox" name="p2p_blocked" {% if client.p2p_blocked %}checked{% endif %}>
+              <span class="switch-ui" aria-hidden="true"></span>
+              <span><b>Блокировать торренты</b><small>Типовые порты и сигнатуры BitTorrent</small></span>
+            </label>
+            <label class="speed-limit-field">
+              <span>Скачивание</span>
+              <input name="download_limit_mbps" type="number" inputmode="numeric" min="0" max="1000" step="1" value="{{ client.download_limit_mbps }}" required>
+              <b>Мбит/с</b>
+            </label>
+            <button class="secondary-action"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-save"></use></svg> Применить</button>
+          </form>
+          <p class="policy-disclaimer">0 = без лимита. P2P-фильтр не является DPI: шифрованный трафик на случайных портах может пройти.</p>
+          <p class="policy-sync {{ policy_state.state }}"><i></i>{{ policy_state.message }}{% if policy_state.updated_at %} · {{ policy_state.updated_at }}{% endif %}</p>
+        </section>
         <section class="danger-zone">
-          <span class="control-index">C</span><div><h2>Управление</h2><p>Остановить или удалить этот ключ.</p></div>
+          <span class="control-index">D</span><div><h2>Управление</h2><p>Остановить или удалить этот ключ.</p></div>
           <div class="inline-form">
             <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}">
               <input type="hidden" name="csrf" value="{{ session.csrf }}">

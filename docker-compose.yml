@@ -73,7 +73,9 @@ services:
 
   wg-easy:
     # v14 keeps declarative WG_HOST support for generated client configs.
-    image: ghcr.io/wg-easy/wg-easy:14
+    build:
+      context: .
+      dockerfile: vpn/wg/Dockerfile
     restart: unless-stopped
     environment:
       LANG: ru
@@ -96,7 +98,9 @@ services:
     networks: [vpn]
 
   awg-easy:
-    image: ghcr.io/yokitoki/awg-easy:latest
+    build:
+      context: .
+      dockerfile: vpn/awg/Dockerfile
     restart: unless-stopped
     environment:
       LANG: ru
