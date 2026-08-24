@@ -18,12 +18,12 @@
 
     <section class="gate-console">
       <div class="gate-console-head"><span>AUTH_01</span><b>ENCRYPTED ENTRY</b></div>
-      <div class="gate-intro"><p class="section-code"><span>↳</span> / AUTHORIZE</p><h2>Вход в панель</h2><p>Введите мастер-пароль администратора.</p></div>
+      <div class="gate-intro"><p class="section-code"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-lock-keyhole"></use></svg></span> / AUTHORIZE</p><h2>Вход в панель</h2><p>Введите мастер-пароль администратора.</p></div>
       {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
       <form method="post" class="login-form">
         <input type="hidden" name="csrf" value="{{ session.csrf }}">
         <label><span>MASTER_PASSWORD</span><input type="password" name="password" maxlength="128" autocomplete="current-password" placeholder="••••••••••••" required autofocus></label>
-        <button class="primary-action wide"><span>→</span> Открыть контур</button>
+        <button class="primary-action wide"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-log-in"></use></svg> Открыть контур</button>
       </form>
       <p class="gate-footnote"><span>◈</span> Сессия защищена и ограничена по времени.</p>
     </section>

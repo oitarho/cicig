@@ -8,7 +8,7 @@
   <style>
     :root{color-scheme:dark;--green:#39ff88;--muted:#6fa486;--line:#174d32;--bg:#020705}
     *{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:24px;background-color:var(--bg);background-image:linear-gradient(#39ff8809 1px,transparent 1px),linear-gradient(90deg,#39ff8809 1px,transparent 1px),radial-gradient(circle at 50% 20%,#0c3522,transparent 45%);background-size:30px 30px,30px 30px,auto;color:#ddffea;font-family:"Cascadia Code",Consolas,monospace}body:after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 3px,#0002 3px 4px)}main{width:min(720px,100%);display:grid;grid-template-columns:220px 1fr;align-items:center;gap:30px;padding:28px;border:1px solid var(--line);background:#030b08eb;box-shadow:0 0 70px #39ff8820,0 30px 90px #000b}img{width:100%;filter:drop-shadow(0 0 22px #39ff8860)}.prompt{color:var(--green);font-size:12px;letter-spacing:.08em}h1{font-size:clamp(30px,7vw,58px);margin:8px 0;letter-spacing:-.06em}p{color:var(--muted);line-height:1.6}.status{display:flex;align-items:center;gap:10px;color:var(--green);font-size:13px}.dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 14px var(--green)}code{display:block;margin-top:22px;padding:13px;border-left:2px solid var(--green);background:#06140d;color:#8ccfa5;font-size:12px}.cursor{animation:blink 1s steps(1) infinite;color:var(--green)}@keyframes blink{50%{opacity:0}}footer{grid-column:1/-1;padding-top:16px;border-top:1px solid var(--line);color:#47705a;font-size:11px;text-align:center}@media(max-width:620px){main{grid-template-columns:1fr;text-align:center}img{width:160px;margin:auto}.status{justify-content:center}code{text-align:left}footer{grid-column:auto}}@media(prefers-reduced-motion:reduce){.cursor{animation:none}}
-    .enter{display:inline-block;margin-top:16px;padding:9px 12px;border:1px solid var(--green);color:var(--green);text-decoration:none;font-size:12px}.enter:hover{background:var(--green);color:#021006}
+    .icon{width:15px;height:15px;vertical-align:-3px}.enter{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:9px 12px;border:1px solid var(--green);color:var(--green);text-decoration:none;font-size:12px}.enter:hover{background:var(--green);color:#021006}
   </style>
 </head>
 <body>
@@ -20,7 +20,7 @@
       <div class="status"><span class="dot"></span> Зашифрованные тоннели в сети</div>
       <p>Вы нашли кошачью ноду. Здесь нет публичной панели, рекламы и трекеров — только тихо мурлычет VPN.</p>
       <code>&gt; access: private<br>&gt; telemetry: disabled<br>&gt; cat: watching you 😼</code>
-      <a class="enter" href="https://{{env `PANEL_DOMAIN`}}">Войти в кошачий сейф →</a>
+      <a class="enter" href="https://{{env `PANEL_DOMAIN`}}"><svg class="icon" aria-hidden="true"><use href="/assets/lucide.svg#icon-log-in"></use></svg> Войти в кошачий сейф</a>
     </section>
     <footer>Если вы знаете, зачем пришли — нужный адрес у вас уже есть.</footer>
   </main>

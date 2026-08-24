@@ -1,9 +1,11 @@
 document.querySelectorAll("[data-copy]").forEach((button) => {
   button.addEventListener("click", async () => {
-    const original = button.textContent;
+    const label = button.querySelector("[data-copy-label]");
+    const original = label?.textContent ?? button.textContent;
     try {
       await navigator.clipboard.writeText(button.dataset.copy);
-      button.textContent = button.dataset.copied;
+      if (label) label.textContent = button.dataset.copied;
+      else button.textContent = button.dataset.copied;
     } catch {
       const input = document.createElement("textarea");
       input.value = button.dataset.copy;
@@ -13,8 +15,12 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
       input.select();
       document.execCommand("copy");
       input.remove();
-      button.textContent = button.dataset.copied;
+      if (label) label.textContent = button.dataset.copied;
+      else button.textContent = button.dataset.copied;
     }
-    window.setTimeout(() => { button.textContent = original; }, 1800);
+    window.setTimeout(() => {
+      if (label) label.textContent = original;
+      else button.textContent = original;
+    }, 1800);
   });
 });

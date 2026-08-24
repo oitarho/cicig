@@ -7,6 +7,7 @@ on:
       - "site/**"
       - "assets/cicig-cat-hacker.png"
       - "assets/panel-preview.png"
+      - "assets/lucide.svg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,7 +32,7 @@ jobs:
         run: |
           mkdir -p _site/assets
           cp -R site/. _site/
-          cp assets/cicig-cat-hacker.png assets/panel-preview.png _site/assets/
+          cp assets/cicig-cat-hacker.png assets/panel-preview.png assets/lucide.svg _site/assets/
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:

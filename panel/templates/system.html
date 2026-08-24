@@ -34,7 +34,7 @@
 
   <section class="patch-console">
     <div class="patch-copy">
-      <p class="section-code"><span>↻</span> / SYSTEM_PATCH</p>
+      <p class="section-code"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-refresh-cw"></use></svg></span> / SYSTEM_PATCH</p>
       <h2>Обновление cicig</h2>
       <p>Код и контейнеры обновятся вместе. Клиенты, ключи, домены и сертификаты сохранятся.</p>
       {% if update.result %}<div class="update-result"><span>{{ 'RUN' if update.running else 'LOG' }}</span><p>{{ update.result }}{% if update.updated_at %}<small>{{ update.updated_at }}</small>{% endif %}</p></div>{% endif %}
@@ -43,11 +43,11 @@
       <input type="hidden" name="csrf" value="{{ session.csrf }}">
       <label class="switch-line"><input type="checkbox" name="auto_update" {% if settings.auto_update %}checked{% endif %}><span class="switch-ui"></span><span><b>Автообновление</b><small>Проверять GitHub по расписанию</small></span></label>
       <label><span>Интервал, часов</span><input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label>
-      <button class="secondary-action">Сохранить режим</button>
+      <button class="secondary-action"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-save"></use></svg> Сохранить режим</button>
     </form>
     <form class="patch-now" method="post" action="{{ url_for('update') }}">
       <input type="hidden" name="csrf" value="{{ session.csrf }}">
-      <button class="primary-action" {% if update.running %}disabled{% endif %}><span>↻</span>{{ 'Обновление идёт' if update.running else 'Обновить сейчас' }}</button>
+      <button class="primary-action" {% if update.running %}disabled{% endif %}><svg class="lucide-icon{% if update.running %} icon-spin{% endif %}" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-refresh-cw"></use></svg>{{ 'Обновление идёт' if update.running else 'Обновить сейчас' }}</button>
       <small>Панель может пропасть на несколько секунд.</small>
     </form>
   </section>

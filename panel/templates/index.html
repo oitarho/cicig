@@ -9,7 +9,7 @@
   {% for category, message in get_flashed_messages(with_categories=true) %}
     {% if category == 'sale' %}
       <div class="sale-toast" role="status">
-        <button type="button" class="sale-close" data-dismiss aria-label="Закрыть">×</button>
+        <button type="button" class="sale-close" data-dismiss aria-label="Закрыть"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-x"></use></svg></button>
         <div class="sale-visual"><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"></div>
         <div class="sale-copy"><span>KEY DEPLOYED // PROFIT +1</span><strong>{{ message }}</strong><small>Туннель продан. Кот доволен.</small></div>
       </div>
@@ -29,19 +29,19 @@
       <article><small>активны</small><strong>{{ enabled_clients }}</strong><i>LIVE</i></article>
       <article><small>в сети</small><strong>{{ counts.connection.online }}</strong><i>NOW</i></article>
     </div>
-    <button type="button" class="primary-action" data-open-dialog="create-client"><span>＋</span> Выпустить ключ</button>
+    <button type="button" class="primary-action" data-open-dialog="create-client"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-plus"></use></svg> Выпустить ключ</button>
   </section>
 
   <form class="filter-console" method="get" action="{{ url_for('index') }}#clients">
     <div class="search-line">
-      <label class="search-field"><span>⌕</span><input type="search" name="q" value="{{ query }}" placeholder="Имя, IP или public key…" aria-label="Поиск клиентов"></label>
+      <label class="search-field"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-search"></use></svg></span><input type="search" name="q" value="{{ query }}" placeholder="Имя, IP или public key…" aria-label="Поиск клиентов"></label>
       <select name="service" data-autosubmit aria-label="VPN-протокол">
         <option value="all">Оба протокола</option>
         <option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option>
         <option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option>
       </select>
-      <button class="search-button">Найти</button>
-      <a class="reset" href="{{ url_for('index') }}#clients">Сбросить</a>
+      <button class="search-button"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-search"></use></svg> Найти</button>
+      <a class="reset" href="{{ url_for('index') }}#clients"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-x"></use></svg> Сбросить</a>
     </div>
     <div class="filter-line">
       <span class="filter-label">Доступ</span>
@@ -81,15 +81,15 @@
                 <div class="traffic"><span><small>RX</small>{{ client.transfer_rx_h }}</span><span><small>TX</small>{{ client.transfer_tx_h }}</span></div>
                 <div class="client-state"><span class="state-tag {{ client.subscription }}">{{ {'active':'активен','expiring':'скоро сгорит','expired':'срок истёк','disabled':'отключён'}[client.subscription] }}</span><small>{{ client.expires_label }}</small></div>
                 <div class="client-actions">
-                  <a class="row-command" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="Открыть QR-код">QR</a>
-                  <a class="row-command" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
+                  <a class="row-command" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="Открыть QR-код" aria-label="Открыть QR-код"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-qr-code"></use></svg></a>
+                  <a class="row-command" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию" aria-label="Скачать конфигурацию"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-file-down"></use></svg></a>
                   <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}">
                     <input type="hidden" name="csrf" value="{{ session.csrf }}">
-                    <button class="row-command" title="{{ 'Отключить' if client.enabled else 'Включить' }}">{{ 'OFF' if client.enabled else 'ON' }}</button>
+                    <button class="row-command" title="{{ 'Отключить' if client.enabled else 'Включить' }}" aria-label="{{ 'Отключить' if client.enabled else 'Включить' }}"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-power"></use></svg></button>
                   </form>
                   <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Удалить клиента? Его конфигурация перестанет работать сразу.">
                     <input type="hidden" name="csrf" value="{{ session.csrf }}">
-                    <button class="row-command danger" title="Удалить клиента">DEL</button>
+                    <button class="row-command danger" title="Удалить клиента" aria-label="Удалить клиента"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-trash-2"></use></svg></button>
                   </form>
                 </div>
               </article>
@@ -105,13 +105,13 @@
   <dialog id="create-client" class="keygen-dialog">
     <form method="post" action="{{ url_for('create_client') }}">
       <input type="hidden" name="csrf" value="{{ session.csrf }}">
-      <div class="dialog-head"><div><p class="section-code"><span>＋</span> / KEYGEN</p><h2>Новый ключ</h2></div><button type="button" class="dialog-close" data-close-dialog aria-label="Закрыть">×</button></div>
+      <div class="dialog-head"><div><p class="section-code"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-key-round"></use></svg></span> / KEYGEN</p><h2>Новый ключ</h2></div><button type="button" class="dialog-close" data-close-dialog aria-label="Закрыть"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-x"></use></svg></button></div>
       <label><span>01 / Протокол</span><select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
       <label><span>02 / Имя клиента</span><input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
       <label><span>03 / Срок доступа</span><select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
       <label><span>04 / Заметка</span><input name="note" maxlength="200" placeholder="Устройство или владелец"></label>
       <p class="form-hint">После создания будут доступны файл `.conf` и JPEG QR-код.</p>
-      <button class="primary-action wide"><span>↳</span> Создать доступ</button>
+      <button class="primary-action wide"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-key-round"></use></svg> Создать доступ</button>
     </form>
   </dialog>
 {% endblock %}

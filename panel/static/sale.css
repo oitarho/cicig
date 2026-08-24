@@ -34,6 +34,7 @@
 .sale-copy strong { font: 30px/1 var(--display); text-transform: uppercase; }
 .sale-copy small { color: var(--amber); }
 .sale-close { position: absolute; z-index: 2; top: 9px; right: 9px; width: 34px; height: 34px; border: 1px solid var(--line); background: var(--void); color: var(--danger); font-size: 23px; cursor: pointer; }
+.sale-close .lucide-icon { width: 17px; height: 17px; }
 .sale-close:hover { border-color: var(--danger); }
 
 @keyframes sale-in {

@@ -39,7 +39,7 @@
       </nav>
       <div class="nav-actions">
         <div class="language-switch" aria-label="Choose language"><a href="../" lang="ru">RU</a><a class="active" href="./" lang="en">EN</a></div>
-        <a class="github-link" href="https://github.com/oitarho/cicig">GitHub ↗</a>
+        <a class="github-link" href="https://github.com/oitarho/cicig">GitHub <svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-external-link"></use></svg></a>
       </div>
     </div>
   </header>
@@ -54,12 +54,12 @@
         <div class="install-command" aria-label="Installation command">
           <span>$</span>
           <code>curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash</code>
-          <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash" data-copied="Copied">Copy</button>
+          <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash" data-copied="Copied"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-copy"></use></svg><span data-copy-label>Copy</span></button>
         </div>
 
         <div class="hero-actions">
-          <a class="action-primary" href="#install">Deploy cicig →</a>
-          <a class="action-secondary" href="https://github.com/oitarho/cicig">View source code</a>
+          <a class="action-primary" href="#install"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-rocket"></use></svg> Deploy cicig</a>
+          <a class="action-secondary" href="https://github.com/oitarho/cicig"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-file-code-2"></use></svg> View source code</a>
         </div>
       </div>
 
@@ -91,7 +91,7 @@
       <figure class="panel-shot">
         <header><span><i></i><i></i><i></i></span><code>panel.mydomain.com / ACCESS_VAULT</code><b>DEMO_DATA</b></header>
         <a href="../assets/panel-preview.png"><img src="../assets/panel-preview.png" loading="lazy" alt="Unified WireGuard and AmneziaWG control panel in cicig"></a>
-        <figcaption><span>◈ CICIG CONTROL PANEL</span><span>Open the full-size screenshot ↗</span></figcaption>
+        <figcaption><span>◈ CICIG CONTROL PANEL</span><span>Open full size <svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-external-link"></use></svg></span></figcaption>
       </figure>
     </section>
 
@@ -102,11 +102,11 @@
       </div>
 
       <div class="feature-ledger">
-        <article class="feature-row"><span class="feature-index">01.1</span><h3>Unified registry</h3><p>WireGuard and AmneziaWG clients, search, connection status, and traffic on one screen.</p><span class="feature-arrow">↗</span></article>
-        <article class="feature-row"><span class="feature-index">01.2</span><h3>Issue keys</h3><p>Create a client and deliver a ready <code>.conf</code> file or JPEG QR code without exposing internal VPN panels.</p><span class="feature-arrow">↗</span></article>
-        <article class="feature-row"><span class="feature-index">01.3</span><h3>Expiration control</h3><p>Extend, manually disable, or automatically revoke expired access.</p><span class="feature-arrow">↗</span></article>
-        <article class="feature-row"><span class="feature-index">01.4</span><h3>Domain endpoints</h3><p>Client configurations connect to your domain instead of a hard-coded IP address.</p><span class="feature-arrow">↗</span></article>
-        <article class="feature-row"><span class="feature-index">01.5</span><h3>Full-system updates</h3><p>Update the code and containers manually or automatically while preserving keys and data.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.1</span><h3>Unified registry</h3><p>WireGuard and AmneziaWG clients, search, connection status, and traffic on one screen.</p><span class="feature-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-panel-top"></use></svg></span></article>
+        <article class="feature-row"><span class="feature-index">01.2</span><h3>Issue keys</h3><p>Create a client and deliver a ready <code>.conf</code> file or JPEG QR code without exposing internal VPN panels.</p><span class="feature-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-key-round"></use></svg></span></article>
+        <article class="feature-row"><span class="feature-index">01.3</span><h3>Expiration control</h3><p>Extend, manually disable, or automatically revoke expired access.</p><span class="feature-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-calendar-clock"></use></svg></span></article>
+        <article class="feature-row"><span class="feature-index">01.4</span><h3>Domain endpoints</h3><p>Client configurations connect to your domain instead of a hard-coded IP address.</p><span class="feature-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-globe-2"></use></svg></span></article>
+        <article class="feature-row"><span class="feature-index">01.5</span><h3>Full-system updates</h3><p>Update the code and containers manually or automatically while preserving keys and data.</p><span class="feature-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-refresh-cw"></use></svg></span></article>
       </div>
     </section>
 
@@ -120,9 +120,9 @@
         <header class="architecture-head"><span>ROUTE_MAP // CICIG</span><b>SELF_HOSTED / NO EXTERNAL CONTROL PLANE</b></header>
         <div class="flow">
           <div class="flow-node"><span>OPERATOR_01</span><strong>Administrator</strong><small>Issues keys and controls expiration</small></div>
-          <div class="flow-arrow">────→</div>
+          <div class="flow-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-arrow-right"></use></svg></div>
           <div class="flow-node highlight"><span>HTTPS / PANEL</span><strong>cicig</strong><small>One panel at panel.mydomain.com</small></div>
-          <div class="flow-arrow">────→</div>
+          <div class="flow-arrow"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-arrow-right"></use></svg></div>
           <div class="split-node"><div><b>WireGuard</b><code>mydomain.com:51820/udp</code></div><div><b>AmneziaWG</b><code>mydomain.com:443/udp</code></div></div>
         </div>
       </div>
@@ -173,13 +173,13 @@
         <p>Open each configuration in the matching protocol app. Create a separate key for every device.</p>
       </div>
       <div class="client-rails">
-        <a class="client-rail" href="https://www.wireguard.com/install/"><span>WG</span><div><h3>WireGuard</h3><p>Windows · macOS · Android · iOS · Linux</p></div><b>↗</b></a>
+        <a class="client-rail" href="https://www.wireguard.com/install/"><span>WG</span><div><h3>WireGuard</h3><p>Windows · macOS · Android · iOS · Linux</p></div><b><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-external-link"></use></svg></b></a>
         <article class="client-rail awg"><span>AWG</span><div><h3>AmneziaWG</h3><nav class="client-platforms" aria-label="Download AmneziaWG"><a href="https://github.com/amnezia-vpn/amneziawg-windows-client/releases/latest">Windows ↗</a><a href="https://play.google.com/store/apps/details?id=org.amnezia.awg">Android ↗</a><a href="https://apps.apple.com/app/amneziawg/id6478942365">iOS / macOS ↗</a></nav></div></article>
       </div>
     </section>
 
     <section class="content-section final-cta">
-      <div class="cta-shell"><div><h2>Server ready? Release the cat.</h2><p>Open source, MIT License, and a one-command installation.</p></div><a class="action-primary" href="https://github.com/oitarho/cicig">View on GitHub →</a></div>
+      <div class="cta-shell"><div><h2>Server ready? Release the cat.</h2><p>Open source, MIT License, and a one-command installation.</p></div><a class="action-primary" href="https://github.com/oitarho/cicig"><svg class="lucide-icon" aria-hidden="true"><use href="../assets/lucide.svg#icon-rocket"></use></svg> View on GitHub</a></div>
     </section>
   </main>
 

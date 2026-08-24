@@ -17,10 +17,10 @@
 
     <nav class="primary-nav" aria-label="Основная навигация">
       <a class="nav-link {% if active_page == 'keys' %}active{% endif %}" href="{{ url_for('index') }}">
-        <span class="nav-index">01</span><span><b>Ключи</b><small>access vault</small></span>
+        <span class="nav-index"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-key-round"></use></svg></span><span><b>Ключи</b><small>access vault</small></span>
       </a>
       <a class="nav-link {% if active_page == 'system' %}active{% endif %}" href="{{ url_for('system') }}">
-        <span class="nav-index">02</span><span><b>Узлы</b><small>node control</small></span>
+        <span class="nav-index"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-server"></use></svg></span><span><b>Узлы</b><small>node control</small></span>
       </a>
     </nav>
 
@@ -28,7 +28,7 @@
       <p class="node-signal"><i></i><span>NODE LINK</span><b>ENCRYPTED</b></p>
       <form method="post" action="{{ url_for('logout') }}">
         <input type="hidden" name="csrf" value="{{ session.csrf }}">
-        <button class="nav-logout"><span>×</span> Стереть сессию</button>
+        <button class="nav-logout"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-log-out"></use></svg> Стереть сессию</button>
       </form>
     </div>
   </header>

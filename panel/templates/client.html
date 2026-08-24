@@ -5,7 +5,7 @@
 {% block body_class %}page-client{% endblock %}
 
 {% block content %}
-  <a class="back-link" href="{{ url_for('index') }}#clients"><span>←</span> Реестр ключей</a>
+  <a class="back-link" href="{{ url_for('index') }}#clients"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-arrow-left"></use></svg> Реестр ключей</a>
 
   {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
 
@@ -33,7 +33,7 @@
       <div class="control-bay">
         <section>
           <span class="control-index">A</span><div><h2>Конфигурация</h2><p>Готовый файл для {{ service_meta.title }}.</p></div>
-          <a class="primary-action" href="{{ url_for('client_config', service=service, client_id=client.id) }}"><span>↓</span> Скачать .conf</a>
+          <a class="primary-action" href="{{ url_for('client_config', service=service, client_id=client.id) }}"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-download"></use></svg> Скачать .conf</a>
         </section>
         <section>
           <span class="control-index">B</span><div><h2>Продлить доступ</h2><p>Новый срок начнётся после текущего.</p></div>
@@ -48,11 +48,11 @@
           <div class="inline-form">
             <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}">
               <input type="hidden" name="csrf" value="{{ session.csrf }}">
-              <button class="secondary-action">{{ 'Отключить' if client.enabled else 'Включить' }}</button>
+              <button class="secondary-action"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-power"></use></svg> {{ 'Отключить' if client.enabled else 'Включить' }}</button>
             </form>
             <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Удалить клиента? Ключ перестанет работать, отката не будет.">
               <input type="hidden" name="csrf" value="{{ session.csrf }}">
-              <button class="danger-action">Удалить</button>
+              <button class="danger-action"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-trash-2"></use></svg> Удалить</button>
             </form>
           </div>
         </section>
