@@ -81,7 +81,7 @@ class SecuritySmokeTests(unittest.TestCase):
             patch.object(app_module, "save_client_network_settings") as save_settings,
         ):
             response = self.client.post(
-                "/clients/wg-easy/client-1/network",
+                "/clients/wg/client-1/network",
                 data={
                     "csrf": "policy-token",
                     "p2p_blocked": "on",
@@ -91,9 +91,9 @@ class SecuritySmokeTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 302)
         write_policy.assert_called_once_with(
-            "wg-easy", "client-1", "10.8.0.12", True, 25
+            "wg", "client-1", "10.8.0.12", True, 25
         )
-        save_settings.assert_called_once_with("wg-easy", "client-1", True, 25)
+        save_settings.assert_called_once_with("wg", "client-1", True, 25)
 
     def test_client_network_policy_rejects_unsafe_limit(self):
         with self.client.session_transaction(base_url=PANEL_URL) as current_session:
@@ -101,7 +101,7 @@ class SecuritySmokeTests(unittest.TestCase):
             current_session["csrf"] = "policy-token"
         with patch.object(app_module, "clients_for") as clients_for:
             response = self.client.post(
-                "/clients/wg-easy/client-1/network",
+                "/clients/wg/client-1/network",
                 data={"csrf": "policy-token", "download_limit_mbps": "1001"},
                 base_url=PANEL_URL,
             )

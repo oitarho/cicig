@@ -49,10 +49,10 @@ container_status() {
 write_status() {
   temporary="$STATUS_FILE.tmp"
   {
-    printf '{"wg-easy":'
-    container_status wg-easy
-    printf ',"awg-easy":'
-    container_status awg-easy
+    printf '{"wg":'
+    container_status wg
+    printf ',"awg":'
+    container_status awg
     printf '}\n'
   } >"$temporary"
   mv "$temporary" "$STATUS_FILE"
@@ -60,7 +60,7 @@ write_status() {
 
 policy_fingerprint() {
   {
-    for service in wg-easy awg-easy; do
+    for service in wg awg; do
       printf '%s:' "$service"
       container_id=$(docker compose -f "$PROJECT_DIR/docker-compose.yml" --project-directory "$PROJECT_DIR" ps -q "$service" 2>/dev/null || true)
       printf '%s:' "$container_id"
@@ -91,7 +91,7 @@ reconcile_network_policies() {
   fingerprint=$(policy_fingerprint)
   [ "$fingerprint" != "$LAST_POLICY_FINGERPRINT" ] || return 0
   policy_status pending "Кот настраивает сетевые ошейники."
-  if apply_service_policies wg-easy && apply_service_policies awg-easy; then
+  if apply_service_policies wg && apply_service_policies awg; then
     LAST_POLICY_FINGERPRINT=$fingerprint
     policy_status success "Ограничения применены на обоих VPN-узлах."
   else

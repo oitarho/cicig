@@ -155,6 +155,8 @@ Use a unique password and keep the server operating system updated.
 
 ## Built on
 
-`cicig` uses [wg-easy](https://github.com/wg-easy/wg-easy), [awg-easy](https://github.com/YokiToki/awg-easy), and [Caddy](https://caddyserver.com/) as infrastructure components while providing its own unified control panel, installer, and update system on top.
+`cicig` uses native WireGuard tools (`wg`, `wg-quick`) and AmneziaWG tools (`awg`, `awg-quick`, `amneziawg-go`). Client, key, and configuration management is implemented by the project's own backend; no third-party VPN panels are used. Caddy provides HTTPS.
+
+When upgrading from an older release, existing keys and clients are imported automatically from the preserved Docker volumes.
 
 License: [MIT](LICENSE).

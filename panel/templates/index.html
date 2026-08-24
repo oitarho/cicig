@@ -37,8 +37,8 @@
       <label class="search-field"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-search"></use></svg></span><input type="search" name="q" value="{{ query }}" placeholder="Имя, IP или public key…" aria-label="Поиск клиентов"></label>
       <select name="service" data-autosubmit aria-label="VPN-протокол">
         <option value="all">Оба протокола</option>
-        <option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option>
-        <option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option>
+        <option value="wg" {% if service_filter == 'wg' %}selected{% endif %}>WireGuard</option>
+        <option value="awg" {% if service_filter == 'awg' %}selected{% endif %}>AmneziaWG</option>
       </select>
       <button class="search-button"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-search"></use></svg> Найти</button>
       <a class="reset" href="{{ url_for('index') }}#clients"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-x"></use></svg> Сбросить</a>
@@ -62,8 +62,8 @@
       <section class="tunnel-ledger {{ service }}">
         <header class="protocol-head">
           <div class="protocol-identity">
-            <span class="protocol-mark">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span>
-            <div><p>{{ 'TUNNEL_A' if service == 'wg-easy' else 'TUNNEL_B' }}</p><h2>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h2></div>
+            <span class="protocol-mark">{{ 'WG' if service == 'wg' else 'AWG' }}</span>
+            <div><p>{{ 'TUNNEL_A' if service == 'wg' else 'TUNNEL_B' }}</p><h2>{{ 'WireGuard' if service == 'wg' else 'AmneziaWG' }}</h2></div>
           </div>
           <code>{{ endpoints[service] }}</code>
           <span class="protocol-count"><b>{{ items|length }}</b> ключей</span>
@@ -106,7 +106,7 @@
     <form method="post" action="{{ url_for('create_client') }}">
       <input type="hidden" name="csrf" value="{{ session.csrf }}">
       <div class="dialog-head"><div><p class="section-code"><span><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-key-round"></use></svg></span> / KEYGEN</p><h2>Новый ключ</h2></div><button type="button" class="dialog-close" data-close-dialog aria-label="Закрыть"><svg class="lucide-icon" aria-hidden="true"><use href="{{ url_for('static', filename='lucide.svg') }}#icon-x"></use></svg></button></div>
-      <label><span>01 / Протокол</span><select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
+      <label><span>01 / Протокол</span><select name="service" required><option value="wg">WireGuard</option><option value="awg">AmneziaWG</option></select></label>
       <label><span>02 / Имя клиента</span><input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
       <label><span>03 / Срок доступа</span><select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
       <label><span>04 / Заметка</span><input name="note" maxlength="200" placeholder="Устройство или владелец"></label>

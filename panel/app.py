@@ -31,8 +31,8 @@ NETWORK_POLICY_STATUS_FILE = CONTROL_DIR / "network-policy-status.json"
 LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = 15 * 60
 SERVICES = {
-    "wg-easy": {"title": "WireGuard", "short": "WG", "endpoint": "51820/udp", "api": "http://wg-easy:51821"},
-    "awg-easy": {"title": "AmneziaWG", "short": "AWG", "endpoint": "443/udp", "api": "http://awg-easy:51821"},
+    "wg": {"title": "WireGuard", "short": "WG", "endpoint": "51820/udp", "api": "http://wg:8080"},
+    "awg": {"title": "AmneziaWG", "short": "AWG", "endpoint": "443/udp", "api": "http://awg:8080"},
 }
 
 app = Flask(__name__)
@@ -83,6 +83,15 @@ def db_connection() -> sqlite3.Connection:
         connection.execute(
             "ALTER TABLE client_meta ADD COLUMN download_limit_mbps INTEGER NOT NULL DEFAULT 0"
         )
+    for legacy, native in (("wg-easy", "wg"), ("awg-easy", "awg")):
+        connection.execute(
+            """INSERT OR IGNORE INTO client_meta
+            (service, client_id, expires_at, note, p2p_blocked, download_limit_mbps, created_at)
+            SELECT ?, client_id, expires_at, note, p2p_blocked, download_limit_mbps, created_at
+            FROM client_meta WHERE service=?""",
+            (native, legacy),
+        )
+        connection.execute("DELETE FROM client_meta WHERE service=?", (legacy,))
     connection.commit()
     return connection
 
@@ -598,7 +607,7 @@ def create_client():
         months = 1
     expires_at = datetime.now(timezone.utc) + timedelta(days=30 * months)
     payload = {"name": name}
-    if service == "awg-easy":
+    if service == "awg":
         payload["expiredDate"] = expires_at.date().isoformat()
     try:
         old_ids = {str(client.get("id")) for client in clients_for(service)}
@@ -755,7 +764,7 @@ def client_extend(service: str, client_id: str):
     base = current if current and current > datetime.now(timezone.utc) else datetime.now(timezone.utc)
     expires_at = base + timedelta(days=30 * months)
     try:
-        if service == "awg-easy":
+        if service == "awg":
             api_call(service, "PUT", f"/wireguard/client/{client_id}/expireDate", json={"expireDate": expires_at.date().isoformat()})
         if not client.get("enabled"):
             api_call(service, "POST", f"/wireguard/client/{client_id}/enable")

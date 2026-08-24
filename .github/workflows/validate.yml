@@ -18,7 +18,8 @@ jobs:
           sudo apt-get install -y shellcheck
           bash -n install.sh scripts/*.sh
           shellcheck install.sh scripts/*.sh
-          python -m py_compile panel/app.py
+          python -m py_compile panel/app.py vpn/native_api.py
+          python -m unittest tests.test_native_vpn -v
           python -m pip install pip-audit
           python -m pip_audit -r panel/requirements.txt --progress-spinner off
       - name: Validate Compose
@@ -35,10 +36,14 @@ jobs:
             -e PANEL_PASSWORD_HASH='$2b$12$Jdts6R6wrbwJDa0K0K2O/.WG8mx35K.D6uS1x80vBkmSjcY6eYHVO' \
             -e PANEL_DOMAIN=panel.example.com \
             -e VPN_DOMAIN=example.com \
-            -v "$PWD/tests:/tests:ro" \
+            -v "$PWD/tests/test_security.py:/tests/test_security.py:ro" \
             cicig-panel:test \
-            python -m unittest discover -s /tests -v
+            python -m unittest /tests/test_security.py -v
       - name: Build VPN policy images
         run: |
           docker build -t cicig-wg:test -f vpn/wg/Dockerfile .
           docker build -t cicig-awg:test -f vpn/awg/Dockerfile .
+          docker run --rm --entrypoint sh cicig-wg:test -c \
+            'command -v wg && command -v wg-quick && python3 -m py_compile /usr/local/bin/cicig-native-vpn'
+          docker run --rm --entrypoint sh cicig-awg:test -c \
+            'command -v awg && command -v awg-quick && command -v amneziawg-go && python3 -m py_compile /usr/local/bin/cicig-native-vpn'

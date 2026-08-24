@@ -280,12 +280,12 @@ label > span { font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
 
 .tunnel-stack { display: grid; gap: 18px; max-width: 1500px; margin: auto; }
 .tunnel-ledger { position: relative; border: 1px solid var(--line); border-left: 4px solid var(--cyan); background: rgb(6 14 10 / 93%); box-shadow: 8px 8px 0 #020403; }
-.tunnel-ledger.awg-easy { border-left-color: var(--amber); }
+.tunnel-ledger.awg { border-left-color: var(--amber); }
 .tunnel-ledger::after { content: ""; position: absolute; top: -1px; right: -1px; width: 20px; height: 20px; background: linear-gradient(225deg, var(--void) 48%, var(--line) 50%, var(--line) 53%, transparent 55%); }
 .protocol-head { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 26px; min-height: 78px; padding: 12px 22px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, var(--surface-3), transparent 70%); }
 .protocol-identity { display: flex; align-items: center; gap: 13px; }
 .protocol-mark { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid var(--cyan); color: var(--cyan); font: 17px/1 var(--display); transform: skew(-5deg); }
-.tunnel-ledger.awg-easy .protocol-mark, .protocol-mark.awg-easy { border-color: var(--amber); color: var(--amber); }
+.tunnel-ledger.awg .protocol-mark, .protocol-mark.awg { border-color: var(--amber); color: var(--amber); }
 .protocol-identity p { margin: 0 0 3px; color: var(--muted); font-size: 7px; letter-spacing: .12em; }
 .protocol-identity h2 { margin: 0; font-size: 24px; line-height: 1; letter-spacing: .02em; }
 .protocol-head > code { color: var(--acid); font-size: 11px; }

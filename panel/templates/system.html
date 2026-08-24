@@ -21,8 +21,8 @@
     <div class="node-list">
       {% for card in cards %}
         <article class="node-row">
-          <span class="protocol-mark {{ card.name }}">{{ 'WG' if card.name == 'wg-easy' else 'AWG' }}</span>
-          <div class="node-name"><small>{{ 'TUNNEL_A' if card.name == 'wg-easy' else 'TUNNEL_B' }}</small><strong>{{ card.title }}</strong><code>{{ card.endpoint }}</code></div>
+          <span class="protocol-mark {{ card.name }}">{{ 'WG' if card.name == 'wg' else 'AWG' }}</span>
+          <div class="node-name"><small>{{ 'TUNNEL_A' if card.name == 'wg' else 'TUNNEL_B' }}</small><strong>{{ card.title }}</strong><code>{{ card.endpoint }}</code></div>
           <div class="node-health"><span class="signal {{ 'online' if card.status.healthy else 'offline' }}"></span><div><small>СОСТОЯНИЕ</small><strong>{{ card.status.state }}</strong></div></div>
           <div class="node-health"><div><small>HEALTHCHECK</small><strong>{{ card.status.health }}</strong></div></div>
           <div class="node-restarts"><small>RESTARTS</small><strong>{{ card.status.restarts }}</strong></div>

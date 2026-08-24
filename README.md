@@ -155,6 +155,8 @@ test -c /dev/net/tun && echo "TUN/TAP доступен" || echo "TUN/TAP отк�
 
 ## Основа проекта
 
-`cicig` использует [wg-easy](https://github.com/wg-easy/wg-easy), [awg-easy](https://github.com/YokiToki/awg-easy) и [Caddy](https://caddyserver.com/) как инфраструктурные компоненты, добавляя над ними собственную единую панель управления, установщик и систему обновлений.
+`cicig` использует нативные инструменты WireGuard (`wg`, `wg-quick`) и AmneziaWG (`awg`, `awg-quick`, `amneziawg-go`). Управление клиентами, ключами и конфигурациями реализовано собственным backend проекта; сторонние VPN-панели не используются. Caddy отвечает за HTTPS.
+
+При обновлении со старой версии существующие ключи и клиенты автоматически импортируются из сохранённых Docker volumes.
 
 Лицензия: [MIT](LICENSE).

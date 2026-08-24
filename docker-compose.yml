@@ -71,50 +71,22 @@ services:
     security_opt:
       - no-new-privileges:true
 
-  wg-easy:
-    # v14 keeps declarative WG_HOST support for generated client configs.
+  wg:
     build:
       context: .
       dockerfile: vpn/wg/Dockerfile
     restart: unless-stopped
     environment:
-      LANG: ru
-      WG_HOST: ${VPN_DOMAIN}
-      WG_PORT: ${WG_PORT:-51820}
-      PORT: 51821
-      WG_PERSISTENT_KEEPALIVE: 25
-      UI_TRAFFIC_STATS: "true"
-      UI_CHART_TYPE: 2
+      CICIG_PROTOCOL: wg
+      CICIG_INTERFACE: wg0
+      CICIG_NETWORK: 10.8.0.0/24
+      CICIG_PORT: ${WG_PORT:-51820}
+      VPN_DOMAIN: ${VPN_DOMAIN}
     volumes:
-      - wg_data:/etc/wireguard
+      - wg_data:/data
+      - /lib/modules:/lib/modules:ro
     ports:
       - "${WG_PORT:-51820}:${WG_PORT:-51820}/udp"
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    sysctls:
-      net.ipv4.ip_forward: "1"
-      net.ipv4.conf.all.src_valid_mark: "1"
-    networks: [vpn]
-
-  awg-easy:
-    build:
-      context: .
-      dockerfile: vpn/awg/Dockerfile
-    restart: unless-stopped
-    environment:
-      LANG: ru
-      WG_HOST: ${VPN_DOMAIN}
-      WG_PORT: ${AWG_PORT:-443}
-      PORT: 51821
-      WG_PERSISTENT_KEEPALIVE: 25
-    volumes:
-      # The app writes here, while this image's wg-quick reads the second path.
-      # Both mounts must reference the same volume until upstream aligns them.
-      - awg_data:/etc/wireguard
-      - awg_data:/etc/amnezia/amneziawg
-    ports:
-      - "${AWG_PORT:-443}:${AWG_PORT:-443}/udp"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -123,6 +95,40 @@ services:
     sysctls:
       net.ipv4.ip_forward: "1"
       net.ipv4.conf.all.src_valid_mark: "1"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [vpn]
+
+  awg:
+    build:
+      context: .
+      dockerfile: vpn/awg/Dockerfile
+    restart: unless-stopped
+    environment:
+      CICIG_PROTOCOL: awg
+      CICIG_INTERFACE: awg0
+      CICIG_NETWORK: 10.8.0.0/24
+      CICIG_PORT: ${AWG_PORT:-443}
+      VPN_DOMAIN: ${VPN_DOMAIN}
+    volumes:
+      - awg_data:/data
+    ports:
+      - "${AWG_PORT:-443}:${AWG_PORT:-443}/udp"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks: [vpn]
 
 networks:
