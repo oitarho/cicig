@@ -153,11 +153,13 @@ fi
 
 read -r -s -p "Мастер-пароль от кошачьего сейфа: " admin_password <"$tty"; printf '\n' >"$tty"
 [[ ${#admin_password} -ge 12 ]] || die "Пароль должен содержать минимум 12 символов."
+[[ $(printf '%s' "$admin_password" | wc -c) -le 72 ]] || die "Пароль должен занимать не больше 72 байт в UTF-8."
 read -r -s -p "Контрольный мяу-пароль ещё раз: " admin_password_2 <"$tty"; printf '\n' >"$tty"
 [[ $admin_password == "$admin_password_2" ]] || die "Пароли не совпадают."
 
 install -d -m 700 "$CICIG_DIR"
 curl -fsSL "$ARCHIVE_URL" | tar -xz --strip-components=1 -C "$CICIG_DIR"
+install -d -m 700 "$CICIG_DIR/control"
 
 panel_hash=$(bcrypt "$admin_password")
 panel_secret=$(openssl rand -hex 32)

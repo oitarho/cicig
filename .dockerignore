@@ -3,5 +3,7 @@
 .env
 data
 backups
+control
+work
 **/__pycache__
 **/*.pyc

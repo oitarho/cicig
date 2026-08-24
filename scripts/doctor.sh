@@ -7,7 +7,7 @@ printf '\nDNS:\n'
 # Runtime configuration is created by install.sh.
 # shellcheck disable=SC1091
 . ./.env
-getent ahostsv4 "$WG_DOMAIN" | awk '$2 == "STREAM" {print "  WG  " $1; exit}'
-getent ahostsv4 "$AWG_DOMAIN" | awk '$2 == "STREAM" {print "  AWG " $1; exit}'
+getent ahostsv4 "$VPN_DOMAIN" | awk '$2 == "STREAM" {print "  VPN " $1; exit}'
+getent ahostsv4 "$PANEL_DOMAIN" | awk '$2 == "STREAM" {print "  WEB " $1; exit}'
 printf '\nListening ports:\n'
 ss -lntup | grep -E ':(80|443|51820)\b' || true

@@ -19,6 +19,8 @@ jobs:
           bash -n install.sh scripts/*.sh
           shellcheck install.sh scripts/*.sh
           python -m py_compile panel/app.py
+          python -m pip install pip-audit
+          python -m pip_audit -r panel/requirements.txt --progress-spinner off
       - name: Validate Compose
         run: |
           cp .env.example .env
@@ -34,8 +36,9 @@ jobs:
           docker build -t cicig-panel:test -f panel/Dockerfile .
           docker run --rm \
             -e PANEL_SECRET_KEY=test-secret \
-            -e PANEL_PASSWORD_HASH='$$2b$$12$$placeholder' \
+            -e PANEL_PASSWORD_HASH='$2b$12$Jdts6R6wrbwJDa0K0K2O/.WG8mx35K.D6uS1x80vBkmSjcY6eYHVO' \
             -e PANEL_DOMAIN=panel.example.com \
             -e VPN_DOMAIN=example.com \
+            -v "$PWD/tests:/tests:ro" \
             cicig-panel:test \
-            python -c "from app import app; c=app.test_client(); assert c.get('/login').status_code == 200; cm=c.session_transaction(); s=cm.__enter__(); s['authenticated']=True; s['csrf']='test'; cm.__exit__(None,None,None); assert c.get('/').status_code == 200; assert c.get('/system').status_code == 200"
+            python -m unittest discover -s /tests -v

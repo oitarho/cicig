@@ -19,13 +19,13 @@
 </header>
 
 <main>
-  {% for category, message in get_flashed_messages(with_categories=true) %}{% if category == 'sale' %}<div class="sale-toast" role="status"><button type="button" class="sale-close" onclick="this.parentElement.remove()" aria-label="Закрыть">×</button><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"><div><span>ACCESS GRANTED // PROFIT +1</span><strong>{{ message }}</strong><small>Ещё один человек ушёл в зашифрованный тоннель 😼</small></div></div>{% else %}<div class="notice {{ category }}">{{ message }}</div>{% endif %}{% endfor %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}{% if category == 'sale' %}<div class="sale-toast" role="status"><button type="button" class="sale-close" data-dismiss aria-label="Закрыть">×</button><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"><div><span>ACCESS GRANTED // PROFIT +1</span><strong>{{ message }}</strong><small>Ещё один человек ушёл в зашифрованный тоннель 😼</small></div></div>{% else %}<div class="notice {{ category }}">{{ message }}</div>{% endif %}{% endfor %}
 
-  <section id="clients" class="compact-top"><div><p class="eyebrow">root@cicig:/vault/keys</p><h1>VPN-доступы<span class="cursor">_</span></h1></div><div class="compact-metrics"><span><b>{{ total_clients }}</b> всего</span><span><b>{{ enabled_clients }}</b> в строю</span><span><b>{{ counts.connection.online }}</b> онлайн</span></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Выпустить ключ</button></section>
+  <section id="clients" class="compact-top"><div><p class="eyebrow">root@cicig:/vault/keys</p><h1>VPN-доступы<span class="cursor">_</span></h1></div><div class="compact-metrics"><span><b>{{ total_clients }}</b> всего</span><span><b>{{ enabled_clients }}</b> в строю</span><span><b>{{ counts.connection.online }}</b> онлайн</span></div><button type="button" data-open-dialog="create-client">+ Выпустить ключ</button></section>
 
   <form class="filters" method="get" action="{{ url_for('index') }}#clients">
     <input class="search" type="search" name="q" value="{{ query }}" placeholder="Пробить агента: имя, IP или public key…">
-    <select name="service" onchange="this.form.submit()"><option value="all">Оба VPN</option><option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option><option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option></select>
+    <select name="service" data-autosubmit><option value="all">Оба VPN</option><option value="wg-easy" {% if service_filter == 'wg-easy' %}selected{% endif %}>WireGuard</option><option value="awg-easy" {% if service_filter == 'awg-easy' %}selected{% endif %}>AmneziaWG</option></select>
     <button>Пробить базу</button><a class="reset" href="{{ url_for('index') }}#clients">Стереть фильтры</a>
     <div class="filter-row"><span>Таймер</span>
       {% for key, label in [('all','Весь сейф'),('active','В строю'),('expiring','Таймер мигает'),('expired','Сгорели'),('disabled','Канал закрыт')] %}<a class="chip {% if subscription_filter == key %}selected{% endif %}" href="?q={{ query|urlencode }}&service={{ service_filter }}&subscription={{ key }}&connection={{ connection_filter }}#clients">{{ label }} <b>{{ total_clients if key == 'all' else counts.subscription[key] }}</b></a>{% endfor %}
@@ -50,7 +50,7 @@
             <a class="icon-button" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="QR-код">QR</a>
             <a class="icon-button" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
             <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button" title="{{ 'Отключить' if client.enabled else 'Включить' }}">{{ 'OFF' if client.enabled else 'ON' }}</button></form>
-            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" onsubmit="return confirm('Замести следы агента? Конфиг умрёт сразу, отката не будет.')"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button danger" title="Замести следы">DEL</button></form>
+            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" data-confirm="Замести следы агента? Конфиг умрёт сразу, отката не будет."><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button danger" title="Замести следы">DEL</button></form>
           </div>
         </article>
         {% endfor %}
@@ -65,7 +65,7 @@
 <dialog id="create-client">
   <form method="post" action="{{ url_for('create_client') }}">
     <input type="hidden" name="csrf" value="{{ session.csrf }}">
-    <div class="dialog-head"><div><p class="eyebrow">keygen --new</p><h2>Выпустить VPN-ключ</h2></div><button type="button" class="close" onclick="this.closest('dialog').close()">×</button></div>
+    <div class="dialog-head"><div><p class="eyebrow">keygen --new</p><h2>Выпустить VPN-ключ</h2></div><button type="button" class="close" data-close-dialog>×</button></div>
     <label>Выбрать тоннель<select name="service" required><option value="wg-easy">WireGuard // классика</option><option value="awg-easy">AmneziaWG // режим ниндзя</option></select></label>
     <label>Позывной агента<input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
     <label>Таймер самоуничтожения<select name="months"><option value="1">1 месяц</option><option value="3" selected>3 месяца</option><option value="6">6 месяцев</option><option value="12">1 год</option></select></label>
@@ -74,5 +74,6 @@
     <button class="wide">Сгенерировать и продать 😼</button>
   </form>
 </dialog>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </body>
 </html>

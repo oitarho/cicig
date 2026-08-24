@@ -17,11 +17,16 @@ services:
       - ./assets:/srv/assets:ro
       - caddy_data:/data
       - caddy_config:/config
-    networks: [cicig]
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    networks: [web]
     depends_on:
       - panel
-      - wg-easy
-      - awg-easy
 
   panel:
     build:
@@ -33,12 +38,38 @@ services:
       VPN_DOMAIN: ${VPN_DOMAIN}
       PANEL_PASSWORD_HASH: ${PANEL_PASSWORD_HASH}
       PANEL_SECRET_KEY: ${PANEL_SECRET_KEY}
+      CICIG_CONTROL_DIR: /control
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./control:/control
+      - panel_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    networks: [web, vpn]
+
+  controller:
+    build:
+      context: .
+      dockerfile: controller/Dockerfile
+    restart: unless-stopped
+    environment:
       CICIG_PROJECT_DIR: /opt/cicig
+      CICIG_CONTROL_DIR: /control
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/opt/cicig:ro
-      - panel_data:/data
-    networks: [cicig]
+      - ./control:/control
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
 
   wg-easy:
     # v14 keeps declarative WG_HOST support for generated client configs.
@@ -62,7 +93,7 @@ services:
     sysctls:
       net.ipv4.ip_forward: "1"
       net.ipv4.conf.all.src_valid_mark: "1"
-    networks: [cicig]
+    networks: [vpn]
 
   awg-easy:
     image: ghcr.io/yokitoki/awg-easy:latest
@@ -88,10 +119,11 @@ services:
     sysctls:
       net.ipv4.ip_forward: "1"
       net.ipv4.conf.all.src_valid_mark: "1"
-    networks: [cicig]
+    networks: [vpn]
 
 networks:
-  cicig:
+  web:
+  vpn:
 
 volumes:
   wg_data:

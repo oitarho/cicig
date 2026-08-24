@@ -5,7 +5,6 @@ import os
 import re
 import secrets
 import sqlite3
-import subprocess
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -19,10 +18,15 @@ from flask import Flask, Response, flash, redirect, render_template, request, se
 from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-PROJECT_DIR = Path(os.environ.get("CICIG_PROJECT_DIR", "/opt/cicig"))
 DATA_DIR = Path(os.environ.get("CICIG_PANEL_DATA", "/data"))
+CONTROL_DIR = Path(os.environ.get("CICIG_CONTROL_DIR", "/control"))
 SETTINGS_FILE = DATA_DIR / "settings.json"
 DB_FILE = DATA_DIR / "cicig.db"
+STATUS_FILE = CONTROL_DIR / "status.json"
+UPDATE_REQUEST_FILE = CONTROL_DIR / "update.request"
+UPDATE_STATUS_FILE = CONTROL_DIR / "update-status.json"
+LOGIN_ATTEMPTS = 5
+LOGIN_WINDOW_SECONDS = 15 * 60
 SERVICES = {
     "wg-easy": {"title": "WireGuard", "short": "WG", "endpoint": "51820/udp", "api": "http://wg-easy:51821"},
     "awg-easy": {"title": "AmneziaWG", "short": "AWG", "endpoint": "443/udp", "api": "http://awg-easy:51821"},
@@ -35,10 +39,17 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE="Strict",
+    SESSION_COOKIE_NAME="cicig_session",
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
+    MAX_CONTENT_LENGTH=16 * 1024,
+    MAX_FORM_MEMORY_SIZE=16 * 1024,
+    TRUSTED_HOSTS=[os.environ["PANEL_DOMAIN"]],
 )
 
 update_lock = threading.Lock()
 update_state = {"running": False, "result": "", "updated_at": ""}
+login_attempts_lock = threading.Lock()
+login_attempts: dict[str, list[float]] = {}
 
 
 def db_connection() -> sqlite3.Connection:
@@ -118,28 +129,17 @@ def save_settings(settings: dict) -> None:
     temporary.replace(SETTINGS_FILE)
 
 
-def docker(*args: str, timeout: int = 30) -> subprocess.CompletedProcess[str]:
-    try:
-        return subprocess.run(
-            ["docker", *args], capture_output=True, text=True, timeout=timeout, check=False
-        )
-    except (OSError, subprocess.TimeoutExpired) as error:
-        return subprocess.CompletedProcess(
-            ["docker", *args], 127, "", f"docker unavailable: {error}"
-        )
-
-
 def service_status(name: str) -> dict:
-    result = docker(
-        "compose", "--project-directory", str(PROJECT_DIR), "ps", "-q", name
-    )
-    container_id = result.stdout.strip()
-    if not container_id:
-        return {"state": "пропал с радаров", "image": "неизвестен", "health": "датчик молчит", "restarts": "0", "healthy": False}
-    inspected = docker(
-        "inspect", "--format", "{{.State.Status}}|{{.Config.Image}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}|{{.RestartCount}}", container_id
-    )
-    state, image, health, restarts = (inspected.stdout.strip().split("|") + ["", "", "", "0"])[:4]
+    try:
+        raw = json.loads(STATUS_FILE.read_text(encoding="utf-8")).get(name, {})
+    except (OSError, ValueError, TypeError):
+        raw = {}
+    state = str(raw.get("state", ""))
+    image = str(raw.get("image", "неизвестен"))
+    health = str(raw.get("health", "none"))
+    restarts = str(raw.get("restarts", "0"))
+    if not state:
+        return {"state": "пропал с радаров", "image": image, "health": "датчик молчит", "restarts": restarts, "healthy": False}
     states = {"running": "в сети", "created": "готовится к вылазке", "exited": "ушёл в офлайн", "restarting": "зациклился в матрице", "paused": "заморожен"}
     health_states = {"healthy": "мурчит", "unhealthy": "дымится", "starting": "прогревает лапы", "none": "датчик не подключён"}
     return {"state": states.get(state, state), "image": image, "health": health_states.get(health, health), "restarts": restarts or "0", "healthy": state == "running" and health not in {"unhealthy"}}
@@ -260,24 +260,33 @@ def perform_update() -> None:
     with update_lock:
         update_state["running"] = True
         try:
-            running = docker("ps", "-q", "--filter", "name=^/cicig-updater$")
-            if running.stdout.strip():
+            CONTROL_DIR.mkdir(parents=True, exist_ok=True)
+            if UPDATE_REQUEST_FILE.exists():
                 raise RuntimeError("кот уже тащит свежий патч")
-            launched = docker(
-                "run", "--detach", "--rm", "--name", "cicig-updater",
-                "-v", "/var/run/docker.sock:/var/run/docker.sock",
-                "-v", f"{PROJECT_DIR}:{PROJECT_DIR}",
-                "-e", f"CICIG_PROJECT_DIR={PROJECT_DIR}",
-                "docker:cli", "sh", f"{PROJECT_DIR}/scripts/update.sh", timeout=60,
-            )
-            if launched.returncode != 0:
-                raise RuntimeError((launched.stderr or launched.stdout)[-1200:])
-            update_state["result"] = "Кот утащил свежий код в нору. Узел сам перезапустится через пару секунд."
+            temporary = UPDATE_REQUEST_FILE.with_suffix(".tmp")
+            temporary.write_text(datetime.now(timezone.utc).isoformat(), encoding="utf-8")
+            temporary.replace(UPDATE_REQUEST_FILE)
+            update_state["result"] = "Запрос подписан. Изолированный контроллер забирает патч."
         except Exception as exc:  # noqa: BLE001
             update_state["result"] = f"Ошибка: {exc}"
         finally:
             update_state["running"] = False
             update_state["updated_at"] = datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
+
+
+def current_update_state() -> dict:
+    current = update_state.copy()
+    try:
+        saved = json.loads(UPDATE_STATUS_FILE.read_text(encoding="utf-8"))
+        current["running"] = saved.get("state") in {"queued", "running"}
+        current["result"] = str(saved.get("message", current["result"]))[:1200]
+        current["updated_at"] = str(saved.get("updated_at", current["updated_at"]))[:80]
+    except (OSError, ValueError, TypeError):
+        pass
+    if UPDATE_REQUEST_FILE.exists():
+        current["running"] = True
+        current["result"] = update_state["result"] or "Запрос ожидает изолированный контроллер."
+    return current
 
 
 def auto_update_loop() -> None:
@@ -311,6 +320,21 @@ def csrf_setup() -> None:
     session.setdefault("csrf", secrets.token_urlsafe(32))
 
 
+@app.after_request
+def security_headers(response: Response) -> Response:
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; "
+        "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    )
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    return response
+
+
 def logged_in() -> bool:
     return bool(session.get("authenticated"))
 
@@ -325,17 +349,59 @@ def valid_csrf() -> bool:
     return secrets.compare_digest(request.form.get("csrf", ""), session.get("csrf", ""))
 
 
+def login_retry_after(client_ip: str) -> int:
+    now = time.monotonic()
+    with login_attempts_lock:
+        recent = [stamp for stamp in login_attempts.get(client_ip, []) if now - stamp < LOGIN_WINDOW_SECONDS]
+        if recent:
+            login_attempts[client_ip] = recent
+        else:
+            login_attempts.pop(client_ip, None)
+        if len(recent) < LOGIN_ATTEMPTS:
+            return 0
+        return max(1, int(LOGIN_WINDOW_SECONDS - (now - recent[0])) + 1)
+
+
+def record_login_failure(client_ip: str) -> None:
+    with login_attempts_lock:
+        login_attempts.setdefault(client_ip, []).append(time.monotonic())
+
+
+def clear_login_failures(client_ip: str) -> None:
+    with login_attempts_lock:
+        login_attempts.pop(client_ip, None)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        if not valid_csrf():
+            return "Недействительный защитный токен", 400
+        client_ip = request.remote_addr or "unknown"
+        retry_after = login_retry_after(client_ip)
+        if retry_after:
+            response = Response("Слишком много попыток. Кошачий сейф временно запечатан.", status=429)
+            response.headers["Retry-After"] = str(retry_after)
+            return response
         password = request.form.get("password", "").encode()
         expected = os.environ["PANEL_PASSWORD_HASH"].encode()
-        if bcrypt.checkpw(password, expected):
+        authenticated = False
+        if 1 <= len(password) <= 72:
+            try:
+                authenticated = bcrypt.checkpw(password, expected)
+            except ValueError:
+                authenticated = False
+        if authenticated:
+            clear_login_failures(client_ip)
             session.clear()
             session["authenticated"] = True
             session["csrf"] = secrets.token_urlsafe(32)
+            session.permanent = True
             return redirect(url_for("index"))
+        record_login_failure(client_ip)
+        app.logger.warning("Failed panel login from %s", client_ip)
         flash("Доступ запрещён: кошачий сейф не признал пароль", "error")
+        return render_template("login.html"), 401
     return render_template("login.html")
 
 
@@ -403,7 +469,7 @@ def system():
         for name, metadata in SERVICES.items()
     ]
     return render_template(
-        "system.html", cards=cards, settings=settings, update=update_state.copy()
+        "system.html", cards=cards, settings=settings, update=current_update_state()
     )
 
 
@@ -548,7 +614,7 @@ def update():
         return denied
     if not valid_csrf():
         return "Некорректный запрос", 400
-    if not update_state["running"]:
+    if not current_update_state()["running"]:
         threading.Thread(target=perform_update, daemon=True).start()
         flash("Кот ушёл на GitHub за свежим патчем", "success")
     return redirect(url_for("system"))

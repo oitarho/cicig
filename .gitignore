@@ -1,7 +1,8 @@
 .env
 data/
 backups/
+control/
+work/
 *.log
 __pycache__/
 *.pyc
-

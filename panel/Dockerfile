@@ -1,7 +1,6 @@
 FROM python:3.13-alpine
 
-RUN apk add --no-cache docker-cli docker-cli-compose curl \
-    && addgroup -S cicig \
+RUN addgroup -S cicig \
     && adduser -S -G cicig cicig
 
 WORKDIR /app
