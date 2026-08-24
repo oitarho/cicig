@@ -8,23 +8,19 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='sale.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
 </head>
 <body>
 <header>
   <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"><div><strong>cicig_</strong><span>root console // VPN</span></div></a>
-  <nav><a href="#clients">Ключи</a><a href="#systems">Узлы</a><a href="#updates">Патчи</a></nav>
+  <nav><a class="active" href="{{ url_for('index') }}">Ключи</a><a href="{{ url_for('system') }}">Узлы и патчи</a></nav>
   <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Стереть сессию</button></form>
 </header>
 
 <main>
-  <section class="hero">
-    <div><p class="eyebrow">root@cicig:~# status</p><h1>VPN под вашим контролем<span class="cursor">_</span></h1><p>Единый защищённый узел WireGuard и AmneziaWG. Никакой телеметрии. Ваш сервер, ваши ключи, ваши правила.</p></div>
-    <div class="metrics"><div><strong>{{ total_clients }}</strong><span>ключей в сейфе</span></div><div><strong>{{ enabled_clients }}</strong><span>агентов на линии</span></div><div><strong>2</strong><span>туннеля в матрицу</span></div></div>
-  </section>
-
   {% for category, message in get_flashed_messages(with_categories=true) %}{% if category == 'sale' %}<div class="sale-toast" role="status"><button type="button" class="sale-close" onclick="this.parentElement.remove()" aria-label="Закрыть">×</button><img src="{{ url_for('static', filename='sale-cat.gif') }}" alt="Кот празднует продажу VPN-ключа"><div><span>ACCESS GRANTED // PROFIT +1</span><strong>{{ message }}</strong><small>Ещё один человек ушёл в зашифрованный тоннель 😼</small></div></div>{% else %}<div class="notice {{ category }}">{{ message }}</div>{% endif %}{% endfor %}
 
-  <section id="clients" class="section-head"><div><p class="eyebrow">/vault/keys</p><h2>База VPN-доступов</h2></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Выпустить ключ</button></section>
+  <section id="clients" class="compact-top"><div><p class="eyebrow">root@cicig:/vault/keys</p><h1>VPN-доступы<span class="cursor">_</span></h1></div><div class="compact-metrics"><span><b>{{ total_clients }}</b> всего</span><span><b>{{ enabled_clients }}</b> в строю</span><span><b>{{ counts.connection.online }}</b> онлайн</span></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Выпустить ключ</button></section>
 
   <form class="filters" method="get" action="{{ url_for('index') }}#clients">
     <input class="search" type="search" name="q" value="{{ query }}" placeholder="Пробить агента: имя, IP или public key…">
@@ -41,7 +37,7 @@
   <div class="client-groups">
   {% for service, items in clients.items() %}
     <section class="client-group">
-      <div class="group-title"><div><span class="service-icon {{ service }}">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span><div><h3>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h3><p>{{ cards[0].endpoint if service == 'wg-easy' else cards[1].endpoint }}</p></div></div><span>{{ items|length }} клиентов</span></div>
+      <div class="group-title"><div><span class="service-icon {{ service }}">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span><div><h3>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h3><p>{{ endpoints[service] }}</p></div></div><span>{{ items|length }} агентов</span></div>
       {% if items %}
       <div class="client-list">
         {% for client in items %}
@@ -63,23 +59,6 @@
   {% endfor %}
   </div>
 
-  <section id="systems" class="section-head"><div><p class="eyebrow">/proc/cicig</p><h2>Пульс VPN-узлов</h2></div></section>
-  <section class="grid">
-  {% for card in cards %}
-    <article class="card">
-      <div class="card-title"><div><span class="service-icon {{ card.name }}">{{ 'WG' if card.name == 'wg-easy' else 'AWG' }}</span><h3>{{ card.title }}</h3></div><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
-      <dl><div><dt>Адрес подключения</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ контейнера</dt><dd>{{ card.status.image }}</dd></div><div><dt>Проверка состояния</dt><dd>{{ card.status.health }}</dd></div><div><dt>Перезапуски</dt><dd>{{ card.status.restarts }}</dd></div></dl>
-    </article>
-  {% endfor %}
-  </section>
-
-  <section id="updates" class="settings"><div><p class="eyebrow">git pull &amp;&amp; deploy</p><h2>Залить свежий патч</h2><p>cicig забирает свежий код из GitHub, патчит панель, Caddy, WireGuard и AmneziaWG, затем мягко перезапускает весь узел. Домены, пароль, VPN-ключи и клиенты остаются в сейфе.</p>{% if update.result %}<p class="result">{{ update.result }}{% if update.updated_at %}<br><small>{{ update.updated_at }}</small>{% endif %}</p>{% endif %}</div>
-    <form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
-      <label class="check"><input type="checkbox" name="auto_update" {% if settings.auto_update %}checked{% endif %}> Отпускать кота за патчами автоматически</label>
-      <label>Выходить на разведку каждые, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Записать в cron</button>
-    </form>
-    <form method="post" action="{{ url_for('update') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="wide" {% if update.running %}disabled{% endif %}>{{ 'Кот пакует инструменты…' if update.running else 'Отправить кота за патчем' }}</button></form>
-  </section>
 </main>
 
 <dialog id="create-client">

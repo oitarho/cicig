@@ -347,15 +347,10 @@ def index():
     denied = require_login()
     if denied:
         return denied
-    settings = load_settings()
-    cards = []
-    for name, metadata in SERVICES.items():
-        cards.append({
-            "name": name,
-            "title": metadata["title"],
-            "endpoint": f"{os.environ['VPN_DOMAIN']}:{metadata['endpoint']}",
-            "status": service_status(name),
-        })
+    endpoints = {
+        name: f"{os.environ['VPN_DOMAIN']}:{metadata['endpoint']}"
+        for name, metadata in SERVICES.items()
+    }
     all_clients = {name: clients_for(name) for name in SERVICES}
     flat_clients = [client for items in all_clients.values() for client in items]
     total_clients = len(flat_clients)
@@ -380,10 +375,30 @@ def index():
             and (connection_filter == "all" or client["connection"] == connection_filter)
         ]
     return render_template(
-        "index.html", cards=cards, clients=clients, settings=settings, update=update_state.copy(),
+        "index.html", endpoints=endpoints, clients=clients,
         total_clients=total_clients, enabled_clients=enabled_clients, counts=counts,
         query=query, subscription_filter=subscription_filter,
         connection_filter=connection_filter, service_filter=service_filter,
+    )
+
+
+@app.get("/system")
+def system():
+    denied = require_login()
+    if denied:
+        return denied
+    settings = load_settings()
+    cards = [
+        {
+            "name": name,
+            "title": metadata["title"],
+            "endpoint": f"{os.environ['VPN_DOMAIN']}:{metadata['endpoint']}",
+            "status": service_status(name),
+        }
+        for name, metadata in SERVICES.items()
+    ]
+    return render_template(
+        "system.html", cards=cards, settings=settings, update=update_state.copy()
     )
 
 
@@ -531,7 +546,7 @@ def update():
     if not update_state["running"]:
         threading.Thread(target=perform_update, daemon=True).start()
         flash("Кот ушёл на GitHub за свежим патчем", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("system"))
 
 
 @app.post("/settings")
@@ -549,7 +564,7 @@ def settings():
         current["interval_hours"] = 24
     save_settings(current)
     flash("Автопилот перепрошит, расписание сохранено", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("system"))
 
 
 threading.Thread(target=auto_update_loop, daemon=True).start()

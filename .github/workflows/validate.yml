@@ -32,4 +32,4 @@ jobs:
             -e PANEL_DOMAIN=panel.example.com \
             -e VPN_DOMAIN=example.com \
             cicig-panel:test \
-            python -c "from app import app; c=app.test_client(); assert c.get('/login').status_code == 200; cm=c.session_transaction(); s=cm.__enter__(); s['authenticated']=True; s['csrf']='test'; cm.__exit__(None,None,None); assert c.get('/').status_code == 200"
+            python -c "from app import app; c=app.test_client(); assert c.get('/login').status_code == 200; cm=c.session_transaction(); s=cm.__enter__(); s['authenticated']=True; s['csrf']='test'; cm.__exit__(None,None,None); assert c.get('/').status_code == 200; assert c.get('/system').status_code == 200"
