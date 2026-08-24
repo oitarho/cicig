@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/cicig-cat.png" width="180" alt="Иконка cicig — кошка"></p>
+<p align="center"><img src="assets/cicig-cat-hacker.png" width="220" alt="Кошка-хакер cicig"></p>
 
 # cicig
 
@@ -10,6 +10,8 @@
 - Caddy автоматически получает и продлевает HTTPS-сертификат.
 
 HTTP/3 отключён, потому что UDP-порт 443 используется AmneziaWG.
+
+Панель, установщик и документация выполнены в едином стиле underground hacker: тёмный терминал, фосфорный зелёный интерфейс и фирменная кошка-хакер. Это визуальный стиль проекта, а не обещание анонимности: безопасность по-прежнему зависит от сервера, пароля, обновлений и корректной настройки DNS.
 
 ## Быстрая установка
 
@@ -30,6 +32,8 @@ curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sud
 3. Загрузит проект в `/opt/cicig`.
 4. Создаст защищённый файл `.env`.
 5. Запустит Caddy, панель cicig, WireGuard и AmneziaWG.
+
+До запуска контейнеров установщик также проверяет архитектуру `amd64` и наличие `/dev/net/tun`. Если TUN/TAP отключён у VPS-провайдера, установка остановится с понятной инструкцией вместо бесконечного перезапуска AmneziaWG.
 
 ## Возможности панели
 
@@ -84,6 +88,18 @@ docker compose ps
 cd /opt/cicig
 docker compose logs --tail=200
 ```
+
+Если AmneziaWG перезапускается:
+
+```bash
+cd /opt/cicig
+docker compose ps awg-easy
+docker compose logs --tail=200 awg-easy
+test -c /dev/net/tun && echo "TUN/TAP доступен" || echo "TUN/TAP отключён"
+uname -m
+```
+
+Требуются архитектура `x86_64`/`amd64`, устройство `/dev/net/tun`, возможности `NET_ADMIN` и `SYS_MODULE`. Данные AmneziaWG должны находиться в `/etc/wireguard`; cicig использует именно официальный путь и при обновлении пытается сохранить существующие ключи перед миграцией контейнера.
 
 Перезапустить систему:
 

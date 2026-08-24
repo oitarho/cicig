@@ -128,12 +128,12 @@ def service_status(name: str) -> dict:
     if not container_id:
         return {"state": "не найден", "image": "неизвестен", "health": "нет данных", "healthy": False}
     inspected = docker(
-        "inspect", "--format", "{{.State.Status}}|{{.Config.Image}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}", container_id
+        "inspect", "--format", "{{.State.Status}}|{{.Config.Image}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}|{{.RestartCount}}", container_id
     )
-    state, image, health = (inspected.stdout.strip().split("|") + ["", "", ""])[:3]
+    state, image, health, restarts = (inspected.stdout.strip().split("|") + ["", "", "", "0"])[:4]
     states = {"running": "работает", "created": "создан", "exited": "остановлен", "restarting": "перезапускается", "paused": "приостановлен"}
     health_states = {"healthy": "исправен", "unhealthy": "ошибка", "starting": "запускается", "none": "не настроена"}
-    return {"state": states.get(state, state), "image": image, "health": health_states.get(health, health), "healthy": state == "running" and health not in {"unhealthy"}}
+    return {"state": states.get(state, state), "image": image, "health": health_states.get(health, health), "restarts": restarts or "0", "healthy": state == "running" and health not in {"unhealthy"}}
 
 
 def api_call(service: str, method: str, path: str, **kwargs) -> requests.Response:

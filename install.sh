@@ -112,6 +112,10 @@ bcrypt() {
 }
 
 say "${cyan}cicig — WireGuard + AmneziaWG${reset}"
+say "${green}       /\_/\\"
+say "      ( o.o )   root@cicig"
+say "       > ^ <    защищённый VPN-узел${reset}"
+say "${cyan}[ ЭТАП 1/4 ] Идентификация сервера и домена${reset}"
 base_domain=$(prompt "Ваш основной домен (например, mydomain.com)")
 base_domain=${base_domain,,}
 base_domain=${base_domain%.}
@@ -124,8 +128,20 @@ say "Публичный IPv4 сервера: ${green}$server_ip${reset}"
 
 # Hard gate: no package installation or system mutation happens before DNS succeeds.
 dns_gate "$server_ip" "$base_domain" "$panel_domain"
-say "${green}DNS проверен. Начинаю установку.${reset}"
+say "${green}[ OK ] DNS проверен.${reset}"
 
+say "${cyan}[ ЭТАП 2/4 ] Проверка совместимости сервера${reset}"
+case "$(uname -m)" in
+  x86_64|amd64) say "${green}[ OK ] Архитектура amd64 поддерживается.${reset}" ;;
+  *) die "AmneziaWG требует сервер amd64/x86_64. Обнаружено: $(uname -m)." ;;
+esac
+if [[ ! -c /dev/net/tun ]] && command -v modprobe >/dev/null 2>&1; then
+  modprobe tun 2>/dev/null || true
+fi
+[[ -c /dev/net/tun ]] || die "Устройство /dev/net/tun недоступно. Включите TUN/TAP в панели вашего VPS-провайдера и повторите установку."
+say "${green}[ OK ] TUN/TAP доступен.${reset}"
+
+say "${cyan}[ ЭТАП 3/4 ] Установка контейнерной системы${reset}"
 if ! command -v docker >/dev/null 2>&1; then
   curl -fsSL https://get.docker.com | sh
 fi
@@ -160,6 +176,7 @@ EOF
 cd "$CICIG_DIR"
 docker compose config --quiet
 docker compose pull caddy wg-easy awg-easy
+say "${cyan}[ ЭТАП 4/4 ] Запуск защищённого VPN-узла${reset}"
 docker compose up -d --build
 
 say "\n${green}cicig установлен.${reset}"

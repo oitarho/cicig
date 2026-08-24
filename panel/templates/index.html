@@ -6,17 +6,18 @@
   <title>cicig — управление VPN</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='clients.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='hacker.css') }}">
 </head>
 <body>
 <header>
-  <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt=""><div><strong>cicig</strong><span>единая VPN-панель</span></div></a>
+  <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt="Кошка-хакер cicig"><div><strong>cicig_</strong><span>root console // VPN</span></div></a>
   <nav><a href="#clients">Клиенты</a><a href="#systems">Системы</a><a href="#updates">Обновления</a></nav>
   <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Выйти</button></form>
 </header>
 
 <main>
   <section class="hero">
-    <div><p class="eyebrow">Панель управления</p><h1>Оба VPN в одном месте</h1><p>Создавайте клиентов, выдавайте конфигурации и следите за сервисами без перехода между разными интерфейсами.</p></div>
+    <div><p class="eyebrow">root@cicig:~# status</p><h1>VPN под вашим контролем<span class="cursor">_</span></h1><p>Единый защищённый узел WireGuard и AmneziaWG. Никакой телеметрии. Ваш сервер, ваши ключи, ваши правила.</p></div>
     <div class="metrics"><div><strong>{{ total_clients }}</strong><span>всего клиентов</span></div><div><strong>{{ enabled_clients }}</strong><span>активны</span></div><div><strong>2</strong><span>VPN-сервиса</span></div></div>
   </section>
 
@@ -66,7 +67,7 @@
   {% for card in cards %}
     <article class="card">
       <div class="card-title"><div><span class="service-icon {{ card.name }}">{{ 'WG' if card.name == 'wg-easy' else 'AWG' }}</span><h3>{{ card.title }}</h3></div><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
-      <dl><div><dt>Адрес подключения</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ контейнера</dt><dd>{{ card.status.image }}</dd></div><div><dt>Проверка состояния</dt><dd>{{ card.status.health }}</dd></div></dl>
+      <dl><div><dt>Адрес подключения</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ контейнера</dt><dd>{{ card.status.image }}</dd></div><div><dt>Проверка состояния</dt><dd>{{ card.status.health }}</dd></div><div><dt>Перезапуски</dt><dd>{{ card.status.restarts }}</dd></div></dl>
     </article>
   {% endfor %}
   </section>
