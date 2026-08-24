@@ -16,6 +16,7 @@ import bcrypt
 import requests
 import segno
 from flask import Flask, Response, flash, redirect, render_template, request, session, url_for
+from PIL import Image
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 PROJECT_DIR = Path(os.environ.get("CICIG_PROJECT_DIR", "/opt/cicig"))
@@ -465,11 +466,17 @@ def client_qr(service: str, client_id: str):
         return "Некорректный запрос", 400
     try:
         configuration = client_configuration(service, client_id).decode("utf-8")
+        png = BytesIO()
+        segno.make(configuration, error="m", micro=False).save(
+            png, kind="png", scale=8, border=4, dark="#000000", light="#ffffff"
+        )
+        png.seek(0)
         output = BytesIO()
-        segno.make(configuration, error="m", micro=False).save(output, kind="svg", scale=5, xmldecl=False)
+        with Image.open(png) as image:
+            image.convert("RGB").save(output, format="JPEG", quality=95, optimize=True)
     except (requests.RequestException, UnicodeError, ValueError) as exc:
         return f"QR-код недоступен: {exc}", 502
-    return Response(output.getvalue(), content_type="image/svg+xml")
+    return Response(output.getvalue(), content_type="image/jpeg")
 
 
 @app.get("/clients/<service>/<client_id>")
