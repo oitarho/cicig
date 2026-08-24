@@ -42,9 +42,22 @@ Start with a clean server that has:
 
 - Ubuntu 22.04/24.04 or Debian 12;
 - `amd64`/`x86_64` architecture;
+- at least 2 vCPU, 2 GB RAM, and 20 GB SSD storage;
 - a public IPv4 address and your own domain;
 - TUN/TAP enabled;
 - free ports `80/tcp`, `443/tcp`, `443/udp`, and `51820/udp`.
+
+### Resources and scaling
+
+Size the server by the number of clients using the VPN at the same time, not by the total number of issued keys.
+
+| Concurrent clients | Server configuration | Server connection |
+|---|---|---|
+| Up to 20 | 2 vCPU, 2 GB RAM, 20 GB SSD | 100 Mbps or faster |
+| 21–100 | 4 vCPU, 4 GB RAM, 30 GB SSD | 500 Mbps or faster |
+| 101–300 | 8 vCPU, 8 GB RAM, 40 GB SSD | 1 Gbps or faster |
+
+These are planning estimates, not guaranteed limits: actual load depends on per-client traffic, VPS CPU performance, and the share of AmneziaWG traffic. For example, 50 active clients × 5 Mbps requires 250 Mbps; add 20–30% headroom. Upgrade the server when CPU remains above 70%, RAM above 80%, or the network link is saturated. For more than 300 concurrent connections, use multiple independent cicig servers and distribute clients between them—the client database is not currently synchronized across nodes.
 
 Run as `root` or with `sudo`:
 
