@@ -5,8 +5,7 @@ services:
     image: caddy:2.10-alpine
     restart: unless-stopped
     environment:
-      WG_DOMAIN: ${WG_DOMAIN}
-      AWG_DOMAIN: ${AWG_DOMAIN}
+      PANEL_DOMAIN: ${PANEL_DOMAIN}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     ports:
       - "80:80/tcp"
@@ -17,8 +16,25 @@ services:
       - caddy_config:/config
     networks: [cicig]
     depends_on:
+      - panel
       - wg-easy
       - awg-easy
+
+  panel:
+    build:
+      context: .
+      dockerfile: panel/Dockerfile
+    restart: unless-stopped
+    environment:
+      PANEL_DOMAIN: ${PANEL_DOMAIN}
+      PANEL_PASSWORD_HASH: ${PANEL_PASSWORD_HASH}
+      PANEL_SECRET_KEY: ${PANEL_SECRET_KEY}
+      CICIG_PROJECT_DIR: /opt/cicig
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/opt/cicig:ro
+      - panel_data:/data
+    networks: [cicig]
 
   wg-easy:
     # v14 keeps declarative WG_HOST/PASSWORD_HASH support.
@@ -26,7 +42,7 @@ services:
     restart: unless-stopped
     environment:
       LANG: ru
-      WG_HOST: ${WG_DOMAIN}
+      WG_HOST: ${PANEL_DOMAIN}
       WG_PORT: ${WG_PORT:-51820}
       PORT: 51821
       PASSWORD_HASH: ${WG_PASSWORD_HASH}
@@ -50,7 +66,7 @@ services:
     restart: unless-stopped
     environment:
       LANG: ru
-      WG_HOST: ${AWG_DOMAIN}
+      WG_HOST: ${PANEL_DOMAIN}
       WG_PORT: ${AWG_PORT:-443}
       PORT: 51821
       PASSWORD_HASH: ${AWG_PASSWORD_HASH}
@@ -77,4 +93,4 @@ volumes:
   awg_data:
   caddy_data:
   caddy_config:
-
+  panel_data:

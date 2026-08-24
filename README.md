@@ -2,13 +2,14 @@
 
 # cicig
 
-One-command, domain-first deployment of two self-hosted VPNs:
+One-command, domain-first deployment of two self-hosted VPNs and one control panel:
 
-- `wg.example.com` — WireGuard web panel and `wg.example.com:51820/udp` endpoint.
-- `wga.example.com` — AmneziaWG web panel and `wga.example.com:443/udp` endpoint.
+- `panel.example.com:443/tcp` — unified cicig web panel.
+- `panel.example.com:51820/udp` — WireGuard endpoint.
+- `panel.example.com:443/udp` — AmneziaWG endpoint.
 - Caddy provides automatic HTTPS. HTTP/3 is intentionally disabled because AmneziaWG owns UDP/443.
 
-The installer refuses to modify the server until both DNS A records resolve to its public IPv4 address. For Cloudflare, use **DNS only** (grey cloud).
+The installer refuses to modify the server until the single `panel` DNS A record resolves to its public IPv4 address. For Cloudflare, use **DNS only** (grey cloud).
 
 ## Quick start
 
@@ -16,13 +17,15 @@ The installer refuses to modify the server until both DNS A records resolve to i
 curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash
 ```
 
-The script asks only for the base domain (for example, `mydomain.com`) and automatically uses the fixed `wg.mydomain.com` and `wga.mydomain.com` subdomains. It shows the exact DNS records to create, waits for both records, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
+The script asks only for the base domain (for example, `mydomain.com`) and automatically uses `panel.mydomain.com`. It shows the exact A record to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
+
+The control panel shows both VPN services, their image and health status, their shared-domain endpoints, manual update buttons, and independent automatic-update switches. Updates are restricted to the `wg-easy` and `awg-easy` Compose services.
 
 ## Requirements
 
 - Fresh Ubuntu 22.04/24.04 or Debian 12 server
 - Public IPv4
-- Two DNS A records pointing directly to the server
+- One `panel` DNS A record pointing directly to the server
 - TCP 80/443 and UDP 443/51820 available
 - Linux `amd64` for the current AmneziaWG image
 
@@ -37,7 +40,7 @@ Never commit `.env` or generated VPN state. Persistent state is stored in named 
 
 ## Current status
 
-This is an initial scaffold. Before a production release, add CI shell linting, image digest pinning, backup/restore testing, firewall integration, and a migration path to the current wg-easy major version or a native cicig panel.
+The panel needs access to `/var/run/docker.sock` to update the two VPN containers. Treat panel credentials as root-equivalent, keep the application updated, and never expose its internal port directly. Before a production release, add image digest pinning, backup/restore testing, firewall integration, and a migration path to the current wg-easy major version.
 
 ## Upstream components
 

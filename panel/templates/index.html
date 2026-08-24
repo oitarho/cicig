@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cicig — панель</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><header><div class="brand"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt=""><div><strong>cicig</strong><span>VPN control center</span></div></div>
+<form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Выйти</button></form></header>
+<main><h1>VPN-сервисы</h1>
+{% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
+<section class="grid">{% for card in cards %}<article class="card">
+<div class="card-title"><h2>{{ card.title }}</h2><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
+<dl><div><dt>Endpoint</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ</dt><dd>{{ card.status.image }}</dd></div><div><dt>Health</dt><dd>{{ card.status.health }}</dd></div><div><dt>Автообновление</dt><dd>{{ 'включено' if card.auto_update else 'выключено' }}</dd></div></dl>
+{% if card.update.result %}<p class="result">{{ card.update.result }}{% if card.update.updated_at %}<br><small>{{ card.update.updated_at }}</small>{% endif %}</p>{% endif %}
+<div class="actions"><form method="post" action="{{ url_for('update', name=card.name) }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button {% if card.update.running %}disabled{% endif %}>{{ 'Обновляется…' if card.update.running else 'Обновить сейчас' }}</button></form></div>
+</article>{% endfor %}</section>
+<section class="settings"><h2>Автоматическое обновление</h2><p>Панель проверяет новые образы с выбранным интервалом и перезапускает только соответствующий VPN-сервис.</p>
+<form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+<label class="check"><input type="checkbox" name="wg-easy" {% if settings.auto_update['wg-easy'] %}checked{% endif %}> WireGuard</label>
+<label class="check"><input type="checkbox" name="awg-easy" {% if settings.auto_update['awg-easy'] %}checked{% endif %}> AmneziaWG</label>
+<label>Проверять каждые, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button></form></section>
+</main></body></html>

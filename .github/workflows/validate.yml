@@ -18,7 +18,10 @@ jobs:
           sudo apt-get install -y shellcheck
           bash -n install.sh scripts/*.sh
           shellcheck install.sh scripts/*.sh
+          python -m py_compile panel/app.py
       - name: Validate Compose
         run: |
           cp .env.example .env
           docker compose config --quiet
+      - name: Build control panel
+        run: docker build -f panel/Dockerfile .

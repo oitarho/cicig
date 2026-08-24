@@ -2,4 +2,6 @@
 data/
 backups/
 *.log
+__pycache__/
+*.pyc
 
