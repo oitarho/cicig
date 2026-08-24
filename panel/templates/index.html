@@ -66,19 +66,17 @@
   {% for card in cards %}
     <article class="card">
       <div class="card-title"><div><span class="service-icon {{ card.name }}">{{ 'WG' if card.name == 'wg-easy' else 'AWG' }}</span><h3>{{ card.title }}</h3></div><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
-      <dl><div><dt>Endpoint</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ</dt><dd>{{ card.status.image }}</dd></div><div><dt>Health</dt><dd>{{ card.status.health }}</dd></div></dl>
-      {% if card.update.result %}<p class="result">{{ card.update.result }}{% if card.update.updated_at %}<br><small>{{ card.update.updated_at }}</small>{% endif %}</p>{% endif %}
-      <form method="post" action="{{ url_for('update', name=card.name) }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="wide" {% if card.update.running %}disabled{% endif %}>{{ 'Обновляется…' if card.update.running else 'Обновить сейчас' }}</button></form>
+      <dl><div><dt>Адрес подключения</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ контейнера</dt><dd>{{ card.status.image }}</dd></div><div><dt>Проверка состояния</dt><dd>{{ card.status.health }}</dd></div></dl>
     </article>
   {% endfor %}
   </section>
 
-  <section id="updates" class="settings"><div><p class="eyebrow">Автоматизация</p><h2>Автоматическое обновление</h2><p>Обновляется только выбранный VPN-сервис. Настройки панели и клиентские данные находятся в постоянных volumes.</p></div>
+  <section id="updates" class="settings"><div><p class="eyebrow">Автоматизация</p><h2>Обновление всей системы</h2><p>cicig загружает актуальный код из GitHub, обновляет панель, Caddy, WireGuard и AmneziaWG, затем пересобирает и перезапускает систему. Домены, пароль, VPN-ключи и клиенты сохраняются.</p>{% if update.result %}<p class="result">{{ update.result }}{% if update.updated_at %}<br><small>{{ update.updated_at }}</small>{% endif %}</p>{% endif %}</div>
     <form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
-      <label class="check"><input type="checkbox" name="wg-easy" {% if settings.auto_update['wg-easy'] %}checked{% endif %}> WireGuard</label>
-      <label class="check"><input type="checkbox" name="awg-easy" {% if settings.auto_update['awg-easy'] %}checked{% endif %}> AmneziaWG</label>
-      <label>Интервал, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button>
+      <label class="check"><input type="checkbox" name="auto_update" {% if settings.auto_update %}checked{% endif %}> Обновлять всю систему автоматически</label>
+      <label>Проверять каждые, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button>
     </form>
+    <form method="post" action="{{ url_for('update') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="wide" {% if update.running %}disabled{% endif %}>{{ 'Запускается…' if update.running else 'Обновить всю систему сейчас' }}</button></form>
   </section>
 </main>
 

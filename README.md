@@ -1,50 +1,110 @@
-<p align="center"><img src="assets/cicig-cat.png" width="180" alt="cicig cat icon"></p>
+<p align="center"><img src="assets/cicig-cat.png" width="180" alt="Иконка cicig — кошка"></p>
 
 # cicig
 
-One-command, domain-first deployment of two self-hosted VPNs and one control panel:
+`cicig` — установка одной командой двух VPN-сервисов и единой русскоязычной панели управления:
 
-- `panel.example.com:443/tcp` — unified cicig web panel.
-- `example.com:51820/udp` — WireGuard endpoint used in client configs.
-- `example.com:443/udp` — AmneziaWG endpoint used in client configs.
-- Caddy provides automatic HTTPS. HTTP/3 is intentionally disabled because AmneziaWG owns UDP/443.
+- `panel.example.com:443/tcp` — единая веб-панель cicig;
+- `example.com:51820/udp` — адрес WireGuard в клиентских конфигурациях;
+- `example.com:443/udp` — адрес AmneziaWG в клиентских конфигурациях;
+- Caddy автоматически получает и продлевает HTTPS-сертификат.
 
-The installer refuses to modify the server until both the root-domain and `panel` DNS A records resolve to its public IPv4 address. For Cloudflare, use **DNS only** (grey cloud) on both records because the root domain carries VPN UDP traffic.
+HTTP/3 отключён, потому что UDP-порт 443 используется AmneziaWG.
 
-## Quick start
+## Быстрая установка
+
+Запустите на чистом сервере от пользователя с правами `root`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash
 ```
 
-The script asks only for the base domain (for example, `mydomain.com`). It uses that root domain in both VPN client configurations and automatically creates the panel address `panel.mydomain.com`. It shows the two exact A records to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
+Установщик попросит указать основной домен, например `mydomain.com`. Поддомен `panel.mydomain.com` он сформирует самостоятельно. Перед изменением сервера установщик покажет две необходимые DNS-записи типа A и будет проверять их, пока обе не начнут указывать на публичный IPv4 сервера.
 
-The control panel provides one searchable client list for both VPNs, with filters for VPN type, subscription state, and recent connectivity. Each client has a dedicated page with its IP, public key, creation and expiry dates, traffic, QR code, configuration download, extension, enable/disable, and deletion controls. New clients can have a term and an operator note. cicig automatically disables expired clients (including standard WireGuard clients, whose expiry metadata is kept in the panel database).
+Если DNS управляется через Cloudflare, для обеих записей нужно выбрать **DNS only** — серое облако. Проксирование Cloudflare не пропускает необходимый VPN-трафик UDP.
 
-The same panel displays service health, runs manual updates, and configures independent automatic updates. Updates are restricted to the `wg-easy` and `awg-easy` Compose services.
+После успешной проверки DNS установщик:
 
-## Requirements
+1. Установит Docker и Docker Compose, если их ещё нет.
+2. Попросит пароль администратора панели.
+3. Загрузит проект в `/opt/cicig`.
+4. Создаст защищённый файл `.env`.
+5. Запустит Caddy, панель cicig, WireGuard и AmneziaWG.
 
-- Fresh Ubuntu 22.04/24.04 or Debian 12 server
-- Public IPv4
-- Root-domain and `panel` DNS A records pointing directly to the server
-- TCP 80/443 and UDP 443/51820 available
-- Linux `amd64` for the current AmneziaWG image
+## Возможности панели
 
-## Development
+- общий список клиентов WireGuard и AmneziaWG;
+- создание клиента со сроком доступа и заметкой;
+- поиск по имени, IP и публичному ключу;
+- фильтрация по VPN, сроку и состоянию связи;
+- статусы «онлайн», «недавно» и «офлайн»;
+- отдельная карточка клиента с IP, ключом, трафиком и датами;
+- QR-код и скачивание файла `.conf`;
+- продление, включение, отключение и удаление клиента;
+- автоматическое отключение просроченных клиентов;
+- состояние всех сервисов;
+- ручное и автоматическое обновление всей системы.
+
+## Обновление всей системы
+
+Кнопка **«Обновить всю систему сейчас»** загружает актуальную версию ветки `main` из GitHub, обновляет код панели и конфигурацию, загружает новые образы, пересобирает панель и перезапускает весь стек.
+
+Автоматическое обновление выполняет ту же операцию через заданный интервал. Во время обновления панель может быть недоступна несколько секунд. Файл `.env`, HTTPS-сертификаты, база панели, VPN-ключи и клиенты хранятся отдельно и не удаляются.
+
+Ручное обновление из терминала:
+
+```bash
+docker run --rm --name cicig-updater \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /opt/cicig:/opt/cicig \
+  docker:cli sh /opt/cicig/scripts/update.sh
+```
+
+## Системные требования
+
+- Ubuntu 22.04/24.04 или Debian 12;
+- публичный IPv4-адрес;
+- A-записи основного домена и поддомена `panel`, направленные прямо на сервер;
+- свободные TCP-порты 80 и 443;
+- свободные UDP-порты 443 и 51820;
+- архитектура Linux `amd64` для используемого образа AmneziaWG.
+
+## Полезные команды
+
+Посмотреть состояние:
+
+```bash
+cd /opt/cicig
+docker compose ps
+```
+
+Посмотреть журналы:
+
+```bash
+cd /opt/cicig
+docker compose logs --tail=200
+```
+
+Перезапустить систему:
+
+```bash
+cd /opt/cicig
+docker compose up -d
+```
+
+## Разработка
 
 ```bash
 cp .env.example .env
 docker compose config
+docker compose up -d --build
 ```
 
-Never commit `.env` or generated VPN state. Persistent state is stored in named Docker volumes.
+Не добавляйте `.env`, VPN-ключи и сгенерированные данные в Git. Постоянные данные находятся в Docker volumes.
 
-## Current status
+Панель имеет доступ к `/var/run/docker.sock`, потому что через неё выполняется обновление системы. Пароль панели фактически даёт административные возможности на сервере: используйте уникальный сложный пароль и своевременно устанавливайте обновления.
 
-The panel needs access to `/var/run/docker.sock` to update the two VPN containers. Treat panel credentials as root-equivalent, keep the application updated, and never expose its internal port directly. Before a production release, add image digest pinning, backup/restore testing, firewall integration, and a migration path to the current wg-easy major version.
-
-## Upstream components
+## Используемые проекты
 
 - [wg-easy](https://github.com/wg-easy/wg-easy)
 - [awg-easy](https://github.com/YokiToki/awg-easy)

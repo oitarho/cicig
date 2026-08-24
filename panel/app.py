@@ -34,9 +34,7 @@ app.config.update(
 )
 
 update_lock = threading.Lock()
-update_state: dict[str, dict] = {
-    name: {"running": False, "result": "", "updated_at": ""} for name in SERVICES
-}
+update_state = {"running": False, "result": "", "updated_at": ""}
 
 
 def db_connection() -> sqlite3.Connection:
@@ -97,11 +95,13 @@ def human_date(value: datetime | None) -> str:
 
 
 def load_settings() -> dict:
-    defaults = {"auto_update": {name: False for name in SERVICES}, "interval_hours": 24}
+    defaults = {"auto_update": False, "interval_hours": 24, "last_auto_update": 0}
     try:
         saved = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
-        defaults["auto_update"].update(saved.get("auto_update", {}))
+        saved_auto_update = saved.get("auto_update", False)
+        defaults["auto_update"] = any(saved_auto_update.values()) if isinstance(saved_auto_update, dict) else bool(saved_auto_update)
         defaults["interval_hours"] = max(1, int(saved.get("interval_hours", 24)))
+        defaults["last_auto_update"] = float(saved.get("last_auto_update", 0))
     except (OSError, ValueError, TypeError):
         pass
     return defaults
@@ -126,12 +126,14 @@ def service_status(name: str) -> dict:
     )
     container_id = result.stdout.strip()
     if not container_id:
-        return {"state": "not found", "image": "unknown", "healthy": False}
+        return {"state": "не найден", "image": "неизвестен", "health": "нет данных", "healthy": False}
     inspected = docker(
         "inspect", "--format", "{{.State.Status}}|{{.Config.Image}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}", container_id
     )
     state, image, health = (inspected.stdout.strip().split("|") + ["", "", ""])[:3]
-    return {"state": state, "image": image, "health": health, "healthy": state == "running" and health not in {"unhealthy"}}
+    states = {"running": "работает", "created": "создан", "exited": "остановлен", "restarting": "перезапускается", "paused": "приостановлен"}
+    health_states = {"healthy": "исправен", "unhealthy": "ошибка", "starting": "запускается", "none": "не настроена"}
+    return {"state": states.get(state, state), "image": image, "health": health_states.get(health, health), "healthy": state == "running" and health not in {"unhealthy"}}
 
 
 def api_call(service: str, method: str, path: str, **kwargs) -> requests.Response:
@@ -209,39 +211,39 @@ def safe_client_id(client_id: str) -> bool:
     )
 
 
-def perform_update(name: str) -> None:
-    if name not in SERVICES:
-        return
+def perform_update() -> None:
     with update_lock:
-        update_state[name]["running"] = True
+        update_state["running"] = True
         try:
-            pull = docker(
-                "compose", "--project-directory", str(PROJECT_DIR), "pull", name, timeout=540
+            running = docker("ps", "-q", "--filter", "name=^/cicig-updater$")
+            if running.stdout.strip():
+                raise RuntimeError("обновление уже выполняется")
+            launched = docker(
+                "run", "--detach", "--rm", "--name", "cicig-updater",
+                "-v", "/var/run/docker.sock:/var/run/docker.sock",
+                "-v", f"{PROJECT_DIR}:{PROJECT_DIR}",
+                "-e", f"CICIG_PROJECT_DIR={PROJECT_DIR}",
+                "docker:cli", "sh", f"{PROJECT_DIR}/scripts/update.sh", timeout=60,
             )
-            if pull.returncode != 0:
-                raise RuntimeError((pull.stderr or pull.stdout)[-1200:])
-            up = docker(
-                "compose", "--project-directory", str(PROJECT_DIR),
-                "up", "-d", "--no-deps", name, timeout=540
-            )
-            if up.returncode != 0:
-                raise RuntimeError((up.stderr or up.stdout)[-1200:])
-            update_state[name]["result"] = "Обновление завершено успешно"
+            if launched.returncode != 0:
+                raise RuntimeError((launched.stderr or launched.stdout)[-1200:])
+            update_state["result"] = "Обновление всей системы запущено. Панель перезапустится автоматически."
         except Exception as exc:  # noqa: BLE001
-            update_state[name]["result"] = f"Ошибка: {exc}"
+            update_state["result"] = f"Ошибка: {exc}"
         finally:
-            update_state[name]["running"] = False
-            update_state[name]["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+            update_state["running"] = False
+            update_state["updated_at"] = datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC")
 
 
 def auto_update_loop() -> None:
     while True:
+        time.sleep(60)
         settings = load_settings()
-        time.sleep(settings["interval_hours"] * 3600)
-        settings = load_settings()
-        for name, enabled in settings["auto_update"].items():
-            if enabled:
-                perform_update(name)
+        due = time.time() - settings["last_auto_update"] >= settings["interval_hours"] * 3600
+        if settings["auto_update"] and due:
+            settings["last_auto_update"] = time.time()
+            save_settings(settings)
+            perform_update()
 
 
 def expiry_loop() -> None:
@@ -295,7 +297,7 @@ def login():
 @app.post("/logout")
 def logout():
     if not valid_csrf():
-        return "Bad CSRF token", 400
+        return "Недействительный защитный токен", 400
     session.clear()
     return redirect(url_for("login"))
 
@@ -313,8 +315,6 @@ def index():
             "title": metadata["title"],
             "endpoint": f"{os.environ['VPN_DOMAIN']}:{metadata['endpoint']}",
             "status": service_status(name),
-            "auto_update": bool(settings["auto_update"].get(name)),
-            "update": update_state[name].copy(),
         })
     all_clients = {name: clients_for(name) for name in SERVICES}
     flat_clients = [client for items in all_clients.values() for client in items]
@@ -340,7 +340,7 @@ def index():
             and (connection_filter == "all" or client["connection"] == connection_filter)
         ]
     return render_template(
-        "index.html", cards=cards, clients=clients, settings=settings,
+        "index.html", cards=cards, clients=clients, settings=settings, update=update_state.copy(),
         total_clients=total_clients, enabled_clients=enabled_clients, counts=counts,
         query=query, subscription_filter=subscription_filter,
         connection_filter=connection_filter, service_filter=service_filter,
@@ -353,7 +353,7 @@ def create_client():
     if denied:
         return denied
     if not valid_csrf():
-        return "Bad CSRF token", 400
+        return "Недействительный защитный токен", 400
     service = request.form.get("service", "")
     name = request.form.get("name", "").strip()
     if service not in SERVICES or not name or len(name) > 64:
@@ -385,7 +385,7 @@ def client_action(service: str, client_id: str, action: str):
     if denied:
         return denied
     if not valid_csrf() or service not in SERVICES or not safe_client_id(client_id):
-        return "Bad request", 400
+        return "Некорректный запрос", 400
     try:
         if action in {"enable", "disable"}:
             api_call(service, "POST", f"/wireguard/client/{client_id}/{action}")
@@ -395,7 +395,7 @@ def client_action(service: str, client_id: str, action: str):
             delete_client_meta(service, client_id)
             flash("Клиент удалён", "success")
         else:
-            return "Unknown action", 404
+            return "Неизвестное действие", 404
     except requests.RequestException as exc:
         flash(f"Операция не выполнена: {exc}", "error")
     return redirect(url_for("index") + "#clients")
@@ -407,11 +407,11 @@ def client_config(service: str, client_id: str):
     if denied:
         return denied
     if service not in SERVICES or not safe_client_id(client_id):
-        return "Bad request", 400
+        return "Некорректный запрос", 400
     try:
         upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/configuration")
     except requests.RequestException as exc:
-        return f"Configuration unavailable: {exc}", 502
+        return f"Конфигурация недоступна: {exc}", 502
     disposition = upstream.headers.get("Content-Disposition", f'attachment; filename="{client_id}.conf"')
     return Response(upstream.content, content_type="text/plain", headers={"Content-Disposition": disposition})
 
@@ -422,11 +422,11 @@ def client_qr(service: str, client_id: str):
     if denied:
         return denied
     if service not in SERVICES or not safe_client_id(client_id):
-        return "Bad request", 400
+        return "Некорректный запрос", 400
     try:
         upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/qrcode.svg")
     except requests.RequestException as exc:
-        return f"QR unavailable: {exc}", 502
+        return f"QR-код недоступен: {exc}", 502
     return Response(upstream.content, content_type="image/svg+xml")
 
 
@@ -436,10 +436,10 @@ def client_detail(service: str, client_id: str):
     if denied:
         return denied
     if service not in SERVICES or not safe_client_id(client_id):
-        return "Bad request", 400
+        return "Некорректный запрос", 400
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     if not client:
-        return "Client not found", 404
+        return "Клиент не найден", 404
     return render_template("client.html", client=client, service=service, service_meta=SERVICES[service])
 
 
@@ -449,14 +449,14 @@ def client_extend(service: str, client_id: str):
     if denied:
         return denied
     if not valid_csrf() or service not in SERVICES or not safe_client_id(client_id):
-        return "Bad request", 400
+        return "Некорректный запрос", 400
     try:
         months = max(1, min(24, int(request.form.get("months", "1"))))
     except ValueError:
         months = 1
     client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     if not client:
-        return "Client not found", 404
+        return "Клиент не найден", 404
     current = client.get("expires_at_dt")
     base = current if current and current > datetime.now(timezone.utc) else datetime.now(timezone.utc)
     expires_at = base + timedelta(days=30 * months)
@@ -472,16 +472,16 @@ def client_extend(service: str, client_id: str):
     return redirect(url_for("client_detail", service=service, client_id=client_id))
 
 
-@app.post("/update/<name>")
-def update(name: str):
+@app.post("/update")
+def update():
     denied = require_login()
     if denied:
         return denied
-    if not valid_csrf() or name not in SERVICES:
-        return "Bad request", 400
-    if not update_state[name]["running"]:
-        threading.Thread(target=perform_update, args=(name,), daemon=True).start()
-        flash(f"Обновление {SERVICES[name]['title']} запущено", "success")
+    if not valid_csrf():
+        return "Некорректный запрос", 400
+    if not update_state["running"]:
+        threading.Thread(target=perform_update, daemon=True).start()
+        flash("Обновление всей системы cicig запущено", "success")
     return redirect(url_for("index"))
 
 
@@ -491,9 +491,9 @@ def settings():
     if denied:
         return denied
     if not valid_csrf():
-        return "Bad CSRF token", 400
+        return "Недействительный защитный токен", 400
     current = load_settings()
-    current["auto_update"] = {name: request.form.get(name) == "on" for name in SERVICES}
+    current["auto_update"] = request.form.get("auto_update") == "on"
     try:
         current["interval_hours"] = max(1, min(720, int(request.form.get("interval_hours", "24"))))
     except ValueError:
