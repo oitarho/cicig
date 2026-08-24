@@ -144,9 +144,9 @@
           <table class="scale-table">
             <thead><tr><th>Concurrent clients</th><th>Server</th><th>Connection</th></tr></thead>
             <tbody>
-              <tr><td>Up to 20</td><td><strong>2 vCPU / 2 GB</strong></td><td>100 Mbps+</td></tr>
-              <tr><td>21–100</td><td><strong>4 vCPU / 4 GB</strong></td><td>500 Mbps+</td></tr>
-              <tr><td>101–300</td><td><strong>8 vCPU / 8 GB</strong></td><td>1 Gbps+</td></tr>
+              <tr><td data-label="Online">Up to 20</td><td data-label="Server"><strong>2 vCPU / 2 GB</strong></td><td data-label="Connection">100 Mbps+</td></tr>
+              <tr><td data-label="Online">21–100</td><td data-label="Server"><strong>4 vCPU / 4 GB</strong></td><td data-label="Connection">500 Mbps+</td></tr>
+              <tr><td data-label="Online">101–300</td><td data-label="Server"><strong>8 vCPU / 8 GB</strong></td><td data-label="Connection">1 Gbps+</td></tr>
             </tbody>
           </table>
           <p class="scale-note">Connection planning: concurrent clients × average client speed + 20–30% headroom. For more than 300 concurrent connections, distribute clients across independent cicig servers.</p>
