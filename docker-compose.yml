@@ -72,8 +72,10 @@ services:
       PORT: 51821
       WG_PERSISTENT_KEEPALIVE: 25
     volumes:
-      # Official awg-easy stores its server and client keys here.
+      # The app writes here, while this image's wg-quick reads the second path.
+      # Both mounts must reference the same volume until upstream aligns them.
       - awg_data:/etc/wireguard
+      - awg_data:/etc/amnezia/amneziawg
     ports:
       - "${AWG_PORT:-443}:${AWG_PORT:-443}/udp"
     cap_add:
