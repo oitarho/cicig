@@ -26,9 +26,15 @@
 }
 
 {$VPN_DOMAIN} {
-	root * /srv
-	templates
-	file_server
+	handle_path /assets/* {
+		root * /srv-assets
+		file_server
+	}
+	handle {
+		root * /srv
+		templates
+		file_server
+	}
 	header {
 		-Server
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
