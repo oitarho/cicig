@@ -7,8 +7,10 @@ import sqlite3
 import subprocess
 import threading
 import time
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 import bcrypt
 import requests
@@ -211,6 +213,18 @@ def safe_client_id(client_id: str) -> bool:
     )
 
 
+def configuration_filename(name: str, client_id: str) -> str:
+    """Build an RFC 5987 Content-Disposition value with a Cyrillic UTF-8 name."""
+    normalized = unicodedata.normalize("NFC", name).strip()
+    cleaned = "".join(
+        character for character in normalized
+        if character.isprintable() and character not in {'/', '\\', '"', ';'}
+    ).strip(" .")[:80]
+    filename = f"{cleaned or client_id}.conf"
+    encoded = quote(filename, safe="")
+    return f'attachment; filename="client-{client_id}.conf"; filename*=UTF-8\'\'{encoded}'
+
+
 def perform_update() -> None:
     with update_lock:
         update_state["running"] = True
@@ -408,11 +422,12 @@ def client_config(service: str, client_id: str):
         return denied
     if service not in SERVICES or not safe_client_id(client_id):
         return "Некорректный запрос", 400
+    client = next((item for item in clients_for(service) if str(item.get("id")) == client_id), None)
     try:
         upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/configuration")
     except requests.RequestException as exc:
         return f"Конфигурация недоступна: {exc}", 502
-    disposition = upstream.headers.get("Content-Disposition", f'attachment; filename="{client_id}.conf"')
+    disposition = configuration_filename(client.get("name", "") if client else "", client_id)
     return Response(upstream.content, content_type="text/plain", headers={"Content-Disposition": disposition})
 
 
