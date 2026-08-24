@@ -50,7 +50,7 @@ dns_gate() {
   local wg_ok awg_ok attempt=0
   local wg_name=${wg_domain%%.*} awg_name=${awg_domain%%.*}
 
-  say "\n${cyan}Сначала направьте оба домена на этот сервер${reset}"
+  say "\n${cyan}Сначала создайте две DNS-записи типа A (IPv4)${reset}"
   say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
   say "на котором вы управляете своим доменом, и найдите раздел DNS."
   say "\nСоздайте первую DNS-запись:"
@@ -78,27 +78,27 @@ dns_gate() {
     wg_ok=0
     awg_ok=0
 
-    say "\nПроверка DNS №$attempt:"
+    say "\nПроверка DNS-записей типа A (IPv4) №$attempt:"
     found=$(resolve_a "$wg_domain" | paste -sd, -)
     if [[ ,$found, == *,$expected,* ]]; then
-      say "  ${green}✓ WireGuard:${reset}  $wg_domain → $expected — правильно"
+      say "  ${green}✓ A-запись WireGuard:${reset}  $wg_domain → $expected — правильно"
       wg_ok=1
     else
-      say "  ${red}✗ WireGuard:${reset}  $wg_domain → ${found:-запись не найдена}"
+      say "  ${red}✗ A-запись WireGuard:${reset}  $wg_domain → ${found:-запись не найдена}"
       say "                 Нужно: $expected"
     fi
 
     found=$(resolve_a "$awg_domain" | paste -sd, -)
     if [[ ,$found, == *,$expected,* ]]; then
-      say "  ${green}✓ AmneziaWG:${reset} $awg_domain → $expected — правильно"
+      say "  ${green}✓ A-запись AmneziaWG:${reset} $awg_domain → $expected — правильно"
       awg_ok=1
     else
-      say "  ${red}✗ AmneziaWG:${reset} $awg_domain → ${found:-запись не найдена}"
+      say "  ${red}✗ A-запись AmneziaWG:${reset} $awg_domain → ${found:-запись не найдена}"
       say "                 Нужно: $expected"
     fi
 
     if [[ $wg_ok -eq 1 && $awg_ok -eq 1 ]]; then
-      say "\n${green}Обе DNS-записи настроены правильно.${reset}"
+      say "\n${green}Обе DNS-записи типа A настроены правильно.${reset}"
       return
     fi
 
