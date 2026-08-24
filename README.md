@@ -12,10 +12,8 @@ The installer refuses to modify the server until both DNS A records resolve to i
 
 ## Quick start
 
-Replace `OWNER` with the GitHub account or organization that hosts the repository:
-
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/cicig/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash
 ```
 
 The script asks for both domains, shows exact DNS records to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
@@ -46,4 +44,3 @@ This is an initial scaffold. Before a production release, add CI shell linting, 
 - [wg-easy](https://github.com/wg-easy/wg-easy)
 - [awg-easy](https://github.com/YokiToki/awg-easy)
 - [Caddy](https://caddyserver.com/)
-

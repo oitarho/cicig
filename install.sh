@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 readonly CICIG_DIR="/opt/cicig"
-readonly COMPOSE_URL="${CICIG_COMPOSE_URL:-https://raw.githubusercontent.com/OWNER/cicig/main/docker-compose.yml}"
-readonly CADDY_URL="${CICIG_CADDY_URL:-https://raw.githubusercontent.com/OWNER/cicig/main/Caddyfile}"
+readonly COMPOSE_URL="${CICIG_COMPOSE_URL:-https://raw.githubusercontent.com/oitarho/cicig/main/docker-compose.yml}"
+readonly CADDY_URL="${CICIG_CADDY_URL:-https://raw.githubusercontent.com/oitarho/cicig/main/Caddyfile}"
 
 red='\033[0;31m'; green='\033[0;32m'; amber='\033[0;33m'; cyan='\033[0;36m'; reset='\033[0m'
 say() { printf '%b\n' "$*"; }
