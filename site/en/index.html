@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020604">
+  <meta name="description" content="cicig — one self-hosted control panel for WireGuard and AmneziaWG, deployed with a single command.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="cicig — WireGuard and AmneziaWG under one paw">
+  <meta property="og:description" content="One domain, one panel, and the complete lifecycle of VPN access.">
+  <meta property="og:url" content="https://oitarho.github.io/cicig/en/">
+  <meta property="og:image" content="https://oitarho.github.io/cicig/assets/cicig-cat-hacker.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://oitarho.github.io/cicig/en/">
+  <link rel="alternate" hreflang="ru" href="https://oitarho.github.io/cicig/">
+  <link rel="alternate" hreflang="en" href="https://oitarho.github.io/cicig/en/">
+  <link rel="icon" href="../assets/cicig-cat-hacker.png">
+  <link rel="stylesheet" href="../styles.css">
+  <title>cicig — one panel for WireGuard and AmneziaWG</title>
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"cicig","applicationCategory":"NetworkApplication","operatingSystem":"Ubuntu 22.04/24.04, Debian 12","description":"A self-hosted control panel for WireGuard and AmneziaWG.","url":"https://oitarho.github.io/cicig/en/","downloadUrl":"https://github.com/oitarho/cicig","license":"https://opensource.org/license/mit"}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="./" aria-label="cicig home">
+        <img src="../assets/cicig-cat-hacker.png" alt="">
+        <span><strong>CICIG</strong><small>dual tunnel control</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#features" data-index="01">Features</a>
+        <a href="#architecture" data-index="02">Architecture</a>
+        <a href="#requirements" data-index="03">Requirements</a>
+        <a href="#install" data-index="04">Installation</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="language-switch" aria-label="Choose language"><a href="../" lang="ru">RU</a><a class="active" href="./" lang="en">EN</a></div>
+        <a class="github-link" href="https://github.com/oitarho/cicig">GitHub ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span>00</span> / SELF_HOSTED VPN CONTROL</p>
+        <h1>Two tunnels.<em>One panel.</em></h1>
+        <p class="hero-lead"><strong>cicig</strong> deploys WireGuard and AmneziaWG on your server, issues client configurations, and controls access periods from a single interface.</p>
+
+        <div class="install-command" aria-label="Installation command">
+          <span>$</span>
+          <code>curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash</code>
+          <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash" data-copied="Copied">Copy</button>
+        </div>
+
+        <div class="hero-actions">
+          <a class="action-primary" href="#install">Deploy cicig →</a>
+          <a class="action-secondary" href="https://github.com/oitarho/cicig">View source code</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Two VPN tunnel diagram">
+        <span class="visual-code top">NODE_CICIG / CAT_ON_GUARD</span>
+        <span class="visual-code side">SIGNAL: ENCRYPTED</span>
+        <div class="cat-orbit"><img src="../assets/cicig-cat-hacker.png" alt="cicig hacker cat logo"></div>
+        <div class="tunnel-monitor">
+          <div class="tunnel-line"><span>WG</span><div><small>TUNNEL_A</small><strong>WireGuard</strong></div><i></i></div>
+          <div class="tunnel-line awg"><span>AWG</span><div><small>TUNNEL_B</small><strong>AmneziaWG</strong></div><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="signal-strip" aria-label="Key properties">
+      <div class="signal-strip-inner">
+        <article><small>Deployment</small><strong>1 command</strong></article>
+        <article><small>VPN protocols</small><strong>WG + AWG</strong></article>
+        <article><small>Control panel</small><strong>1 domain</strong></article>
+        <article><small>License</small><strong>MIT / OPEN</strong></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="features" class="section-head">
+        <div><p class="section-kicker"><span>01</span> / ACCESS_VAULT</p><h2>Everything for <em>access</em></h2></div>
+        <p>The administrator operates both VPN protocols as one system. The user only needs to import a ready-to-use configuration.</p>
+      </div>
+
+      <div class="feature-ledger">
+        <article class="feature-row"><span class="feature-index">01.1</span><h3>Unified registry</h3><p>WireGuard and AmneziaWG clients, search, connection status, and traffic on one screen.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.2</span><h3>Issue keys</h3><p>Create a client and deliver a ready <code>.conf</code> file or JPEG QR code without exposing internal VPN panels.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.3</span><h3>Expiration control</h3><p>Extend, manually disable, or automatically revoke expired access.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.4</span><h3>Domain endpoints</h3><p>Client configurations connect to your domain instead of a hard-coded IP address.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.5</span><h3>Full-system updates</h3><p>Update the code and containers manually or automatically while preserving keys and data.</p><span class="feature-arrow">↗</span></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="architecture" class="section-head">
+        <div><p class="section-kicker"><span>02</span> / SIGNAL_ROUTE</p><h2>Clear <em>architecture</em></h2></div>
+        <p>Only the HTTPS panel entry point and two UDP ports are public. Client data and VPN keys stay on your server.</p>
+      </div>
+
+      <div class="architecture">
+        <header class="architecture-head"><span>ROUTE_MAP // CICIG</span><b>SELF_HOSTED / NO EXTERNAL CONTROL PLANE</b></header>
+        <div class="flow">
+          <div class="flow-node"><span>OPERATOR_01</span><strong>Administrator</strong><small>Issues keys and controls expiration</small></div>
+          <div class="flow-arrow">────→</div>
+          <div class="flow-node highlight"><span>HTTPS / PANEL</span><strong>cicig</strong><small>One panel at panel.mydomain.com</small></div>
+          <div class="flow-arrow">────→</div>
+          <div class="split-node"><div><b>WireGuard</b><code>mydomain.com:51820/udp</code></div><div><b>AmneziaWG</b><code>mydomain.com:443/udp</code></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="requirements" class="section-head">
+        <div><p class="section-kicker"><span>03</span> / SERVER_PROFILE</p><h2>Start <em>small</em></h2></div>
+        <p>Size the server by concurrent connections and real traffic, not by the total number of issued keys.</p>
+      </div>
+
+      <div class="requirements-grid">
+        <article class="minimum-spec">
+          <h3>Minimum node</h3>
+          <div class="spec-number"><div><strong>2</strong><small>vCPU</small></div><div><strong>2 GB</strong><small>RAM</small></div></div>
+          <ul><li>20 GB SSD</li><li>Public IPv4 address</li><li>100 Mbps or faster connection</li><li>Ubuntu 22.04/24.04 or Debian 12</li><li>TUN/TAP and amd64 architecture</li></ul>
+        </article>
+        <div>
+          <table class="scale-table">
+            <thead><tr><th>Concurrent clients</th><th>Server</th><th>Connection</th></tr></thead>
+            <tbody>
+              <tr><td>Up to 20</td><td><strong>2 vCPU / 2 GB</strong></td><td>100 Mbps+</td></tr>
+              <tr><td>21–100</td><td><strong>4 vCPU / 4 GB</strong></td><td>500 Mbps+</td></tr>
+              <tr><td>101–300</td><td><strong>8 vCPU / 8 GB</strong></td><td>1 Gbps+</td></tr>
+            </tbody>
+          </table>
+          <p class="scale-note">Connection planning: concurrent clients × average client speed + 20–30% headroom. For more than 300 concurrent connections, distribute clients across independent cicig servers.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="install" class="section-head">
+        <div><p class="section-kicker"><span>04</span> / DEPLOY_SEQUENCE</p><h2>Three steps to a <em>tunnel</em></h2></div>
+        <p>The installer validates DNS, installs Docker, starts every service, and obtains an HTTPS certificate.</p>
+      </div>
+
+      <div class="install-track">
+        <article class="install-step"><span>01</span><h3>Prepare DNS</h3><p>Create two A records pointing to the server IPv4: root <code>@</code> and <code>panel</code>. Set Cloudflare to DNS only.</p></article>
+        <article class="install-step"><span>02</span><h3>Run the command</h3><p>Sign in to a clean server as root and start the installer.</p><code>curl …/install.sh | sudo bash</code></article>
+        <article class="install-step"><span>03</span><h3>Issue access</h3><p>Open the panel, create a client, and deliver its <code>.conf</code> file or QR code.</p></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="clients" class="section-head">
+        <div><p class="section-kicker"><span>05</span> / CLIENT_APPS</p><h2>Official <em>clients</em></h2></div>
+        <p>Open each configuration in the matching protocol app. Create a separate key for every device.</p>
+      </div>
+      <div class="client-rails">
+        <a class="client-rail" href="https://www.wireguard.com/install/"><span>WG</span><div><h3>WireGuard</h3><p>Windows · macOS · Android · iOS · Linux</p></div><b>↗</b></a>
+        <article class="client-rail awg"><span>AWG</span><div><h3>AmneziaWG</h3><nav class="client-platforms" aria-label="Download AmneziaWG"><a href="https://github.com/amnezia-vpn/amneziawg-windows-client/releases/latest">Windows ↗</a><a href="https://play.google.com/store/apps/details?id=org.amnezia.awg">Android ↗</a><a href="https://apps.apple.com/app/amneziawg/id6478942365">iOS / macOS ↗</a></nav></div></article>
+      </div>
+    </section>
+
+    <section class="content-section final-cta">
+      <div class="cta-shell"><div><h2>Server ready? Release the cat.</h2><p>Open source, MIT License, and a one-command installation.</p></div><a class="action-primary" href="https://github.com/oitarho/cicig">View on GitHub →</a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-shell">
+      <div><strong>CICIG</strong><p>WireGuard and AmneziaWG under one paw. © 2026</p></div>
+      <nav class="footer-links" aria-label="Footer links"><a href="https://github.com/oitarho/cicig">GitHub</a><a href="https://github.com/oitarho/cicig/blob/main/README.en.md">Documentation</a><a href="https://github.com/oitarho/cicig/blob/main/LICENSE">MIT License</a></nav>
+    </div>
+  </footer>
+  <script src="../app.js"></script>
+</body>
+</html>

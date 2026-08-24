@@ -14,6 +14,7 @@
 </p>
 
 <p align="center">
+  <a href="https://oitarho.github.io/cicig/"><img src="https://img.shields.io/badge/сайт-cicig-24f28a" alt="Сайт cicig"></a>
   <a href="https://github.com/oitarho/cicig/actions/workflows/validate.yml"><img src="https://github.com/oitarho/cicig/actions/workflows/validate.yml/badge.svg" alt="Проверка проекта"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/oitarho/cicig" alt="Лицензия MIT"></a>
 </p>

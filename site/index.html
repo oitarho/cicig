@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020604">
+  <meta name="description" content="cicig — единая self-hosted панель управления WireGuard и AmneziaWG с установкой одной командой.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="cicig — WireGuard и AmneziaWG под одной лапой">
+  <meta property="og:description" content="Один домен, одна панель и полный цикл управления VPN-доступами.">
+  <meta property="og:url" content="https://oitarho.github.io/cicig/">
+  <meta property="og:image" content="https://oitarho.github.io/cicig/assets/cicig-cat-hacker.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://oitarho.github.io/cicig/">
+  <link rel="alternate" hreflang="ru" href="https://oitarho.github.io/cicig/">
+  <link rel="alternate" hreflang="en" href="https://oitarho.github.io/cicig/en/">
+  <link rel="icon" href="assets/cicig-cat-hacker.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>cicig — единая панель WireGuard и AmneziaWG</title>
+  <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"SoftwareApplication","name":"cicig","applicationCategory":"NetworkApplication","operatingSystem":"Ubuntu 22.04/24.04, Debian 12","description":"Self-hosted панель управления WireGuard и AmneziaWG.","url":"https://oitarho.github.io/cicig/","downloadUrl":"https://github.com/oitarho/cicig","license":"https://opensource.org/license/mit"}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Перейти к содержанию</a>
+
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="./" aria-label="cicig — главная">
+        <img src="assets/cicig-cat-hacker.png" alt="">
+        <span><strong>CICIG</strong><small>dual tunnel control</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Основная навигация">
+        <a href="#features" data-index="01">Возможности</a>
+        <a href="#architecture" data-index="02">Архитектура</a>
+        <a href="#requirements" data-index="03">Требования</a>
+        <a href="#install" data-index="04">Установка</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="language-switch" aria-label="Выбор языка"><a class="active" href="./" lang="ru">RU</a><a href="en/" lang="en">EN</a></div>
+        <a class="github-link" href="https://github.com/oitarho/cicig">GitHub ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span>00</span> / SELF_HOSTED VPN CONTROL</p>
+        <h1>Два тоннеля.<em>Одна панель.</em></h1>
+        <p class="hero-lead"><strong>cicig</strong> разворачивает WireGuard и AmneziaWG на вашем сервере, выдаёт клиентские конфиги и управляет сроками доступа из одного интерфейса.</p>
+
+        <div class="install-command" aria-label="Команда установки">
+          <span>$</span>
+          <code>curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash</code>
+          <button class="copy-button" type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash" data-copied="Скопировано">Копировать</button>
+        </div>
+
+        <div class="hero-actions">
+          <a class="action-primary" href="#install">Развернуть cicig →</a>
+          <a class="action-secondary" href="https://github.com/oitarho/cicig">Открыть исходный код</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Схема двух VPN-тоннелей">
+        <span class="visual-code top">NODE_CICIG / CAT_ON_GUARD</span>
+        <span class="visual-code side">SIGNAL: ENCRYPTED</span>
+        <div class="cat-orbit"><img src="assets/cicig-cat-hacker.png" alt="Кошка-хакер — логотип cicig"></div>
+        <div class="tunnel-monitor">
+          <div class="tunnel-line"><span>WG</span><div><small>TUNNEL_A</small><strong>WireGuard</strong></div><i></i></div>
+          <div class="tunnel-line awg"><span>AWG</span><div><small>TUNNEL_B</small><strong>AmneziaWG</strong></div><i></i></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="signal-strip" aria-label="Ключевые свойства">
+      <div class="signal-strip-inner">
+        <article><small>Развёртывание</small><strong>1 команда</strong></article>
+        <article><small>VPN-протоколы</small><strong>WG + AWG</strong></article>
+        <article><small>Панель</small><strong>1 домен</strong></article>
+        <article><small>Лицензия</small><strong>MIT / OPEN</strong></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="features" class="section-head">
+        <div><p class="section-kicker"><span>01</span> / ACCESS_VAULT</p><h2>Всё для выдачи <em>доступа</em></h2></div>
+        <p>Администратор работает с двумя VPN-протоколами как с одной системой. Пользователю остаётся только импортировать готовый конфиг.</p>
+      </div>
+
+      <div class="feature-ledger">
+        <article class="feature-row"><span class="feature-index">01.1</span><h3>Единый реестр</h3><p>WireGuard и AmneziaWG-клиенты, поиск, статусы подключения и трафик на одном экране.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.2</span><h3>Выдача ключей</h3><p>Создание клиента, готовый файл <code>.conf</code> и JPEG QR-код без доступа к внутренним VPN-панелям.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.3</span><h3>Контроль сроков</h3><p>Продление, ручное отключение и автоматическая блокировка просроченного доступа.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.4</span><h3>Домен в конфигах</h3><p>Клиенты подключаются к вашему домену, а не к жёстко записанному IP-адресу.</p><span class="feature-arrow">↗</span></article>
+        <article class="feature-row"><span class="feature-index">01.5</span><h3>Обновление системы</h3><p>Ручное или автоматическое обновление кода и контейнеров с сохранением ключей и данных.</p><span class="feature-arrow">↗</span></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="architecture" class="section-head">
+        <div><p class="section-kicker"><span>02</span> / SIGNAL_ROUTE</p><h2>Понятная <em>архитектура</em></h2></div>
+        <p>Публичен только HTTPS-вход панели и два UDP-порта. Клиентские данные и VPN-ключи остаются на вашем сервере.</p>
+      </div>
+
+      <div class="architecture">
+        <header class="architecture-head"><span>ROUTE_MAP // CICIG</span><b>SELF_HOSTED / NO EXTERNAL CONTROL PLANE</b></header>
+        <div class="flow">
+          <div class="flow-node"><span>OPERATOR_01</span><strong>Администратор</strong><small>Создаёт ключи и управляет сроками</small></div>
+          <div class="flow-arrow">────→</div>
+          <div class="flow-node highlight"><span>HTTPS / PANEL</span><strong>cicig</strong><small>Единая панель на panel.mydomain.com</small></div>
+          <div class="flow-arrow">────→</div>
+          <div class="split-node"><div><b>WireGuard</b><code>mydomain.com:51820/udp</code></div><div><b>AmneziaWG</b><code>mydomain.com:443/udp</code></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="requirements" class="section-head">
+        <div><p class="section-kicker"><span>03</span> / SERVER_PROFILE</p><h2>Начните с <em>малого</em></h2></div>
+        <p>Размер сервера выбирают по числу одновременных подключений и реальному трафику, а не по количеству выпущенных ключей.</p>
+      </div>
+
+      <div class="requirements-grid">
+        <article class="minimum-spec">
+          <h3>Минимальный узел</h3>
+          <div class="spec-number"><div><strong>2</strong><small>vCPU</small></div><div><strong>2 ГБ</strong><small>RAM</small></div></div>
+          <ul><li>20 ГБ SSD</li><li>Публичный IPv4</li><li>Канал от 100 Мбит/с</li><li>Ubuntu 22.04/24.04 или Debian 12</li><li>TUN/TAP и архитектура amd64</li></ul>
+        </article>
+        <div>
+          <table class="scale-table">
+            <thead><tr><th>Одновременно в сети</th><th>Сервер</th><th>Канал</th></tr></thead>
+            <tbody>
+              <tr><td>До 20</td><td><strong>2 vCPU / 2 ГБ</strong></td><td>от 100 Мбит/с</td></tr>
+              <tr><td>21–100</td><td><strong>4 vCPU / 4 ГБ</strong></td><td>от 500 Мбит/с</td></tr>
+              <tr><td>101–300</td><td><strong>8 vCPU / 8 ГБ</strong></td><td>от 1 Гбит/с</td></tr>
+            </tbody>
+          </table>
+          <p class="scale-note">Ориентир для канала: число активных клиентов × их средняя скорость + 20–30% запаса. Более 300 одновременных подключений лучше распределять между отдельными серверами cicig.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="install" class="section-head">
+        <div><p class="section-kicker"><span>04</span> / DEPLOY_SEQUENCE</p><h2>Три шага до <em>тоннеля</em></h2></div>
+        <p>Установщик сам проверяет DNS, ставит Docker, запускает сервисы и получает HTTPS-сертификат.</p>
+      </div>
+
+      <div class="install-track">
+        <article class="install-step"><span>01</span><h3>Подготовьте DNS</h3><p>Создайте две A-записи на IPv4 сервера: корневой домен <code>@</code> и <code>panel</code>. В Cloudflare включите DNS only.</p></article>
+        <article class="install-step"><span>02</span><h3>Запустите команду</h3><p>Войдите на чистый сервер как root и запустите установщик.</p><code>curl …/install.sh | sudo bash</code></article>
+        <article class="install-step"><span>03</span><h3>Выдайте доступ</h3><p>Откройте панель, создайте клиента и передайте ему файл <code>.conf</code> или QR-код.</p></article>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div id="clients" class="section-head">
+        <div><p class="section-kicker"><span>05</span> / CLIENT_APPS</p><h2>Официальные <em>клиенты</em></h2></div>
+        <p>Каждый конфиг открывается в приложении соответствующего протокола. Для каждого устройства создаётся отдельный ключ.</p>
+      </div>
+      <div class="client-rails">
+        <a class="client-rail" href="https://www.wireguard.com/install/"><span>WG</span><div><h3>WireGuard</h3><p>Windows · macOS · Android · iOS · Linux</p></div><b>↗</b></a>
+        <article class="client-rail awg"><span>AWG</span><div><h3>AmneziaWG</h3><nav class="client-platforms" aria-label="Скачать AmneziaWG"><a href="https://github.com/amnezia-vpn/amneziawg-windows-client/releases/latest">Windows ↗</a><a href="https://play.google.com/store/apps/details?id=org.amnezia.awg">Android ↗</a><a href="https://apps.apple.com/app/amneziawg/id6478942365">iOS / macOS ↗</a></nav></div></article>
+      </div>
+    </section>
+
+    <section class="content-section final-cta">
+      <div class="cta-shell"><div><h2>Сервер готов? Выпускайте кота.</h2><p>Открытый исходный код, MIT License и установка одной командой.</p></div><a class="action-primary" href="https://github.com/oitarho/cicig">Смотреть на GitHub →</a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-shell">
+      <div><strong>CICIG</strong><p>WireGuard и AmneziaWG под одной лапой. © 2026</p></div>
+      <nav class="footer-links" aria-label="Ссылки в подвале"><a href="https://github.com/oitarho/cicig">GitHub</a><a href="https://github.com/oitarho/cicig/blob/main/README.md">Документация</a><a href="https://github.com/oitarho/cicig/blob/main/LICENSE">MIT License</a></nav>
+    </div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
