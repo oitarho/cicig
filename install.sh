@@ -46,15 +46,30 @@ resolve_a() {
 }
 
 dns_gate() {
-  local expected=$1 wg_domain=$2 awg_domain=$3 domain found ok
+  local expected=$1 wg_domain=$2 awg_domain=$3 domain found ok answer
+  local wg_name=${wg_domain%%.*} awg_name=${awg_domain%%.*}
   while true; do
-    say "\n${cyan}Добавьте у DNS-провайдера записи:${reset}"
-    printf '\n  %-5s %-28s %s\n' TYPE NAME VALUE
-    printf '  %-5s %-28s %s\n' A "$wg_domain" "$expected"
-    printf '  %-5s %-28s %s\n\n' A "$awg_domain" "$expected"
-    say "Cloudflare: для обеих записей выберите ${amber}DNS only (серое облако)${reset}."
-    say "Пример: Cloudflare → DNS → Records → Add record → Type A → Name → IPv4 → Proxy off → Save."
-    read -r -p "После добавления DNS нажмите Enter (q — выход): " answer <"$tty"
+    say "\n${cyan}Сначала направьте оба домена на этот сервер${reset}"
+    say "В терминал сейчас ничего вводить не нужно. Откройте в браузере сайт,"
+    say "на котором вы управляете своим доменом, и найдите раздел DNS."
+    say "\nСоздайте первую DNS-запись:"
+    say "  Тип записи:       A"
+    say "  Имя / Host:       $wg_name"
+    say "  IPv4 / Значение:  $expected"
+    say "  Результат:         $wg_domain → $expected"
+    say "\nСоздайте вторую DNS-запись:"
+    say "  Тип записи:       A"
+    say "  Имя / Host:       $awg_name"
+    say "  IPv4 / Значение:  $expected"
+    say "  Результат:         $awg_domain → $expected"
+    say "\nЕсли ваш домен находится в Cloudflare:"
+    say "  1. Откройте DNS → Records → Add record."
+    say "  2. Выберите Type: A."
+    say "  3. Заполните Name и IPv4 address значениями выше."
+    say "  4. Выключите Proxy status. Должно быть серое облако ${amber}DNS only${reset}."
+    say "  5. Нажмите Save. Повторите для второго домена."
+    say "\nКогда сохраните обе записи, вернитесь в этот терминал."
+    read -r -p "Нажмите Enter, чтобы проверить DNS (или введите q для выхода): " answer <"$tty"
     [[ ${answer,,} == q ]] && exit 0
 
     ok=1
