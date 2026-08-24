@@ -248,6 +248,21 @@ img { max-width: 100%; }
 .signal-strip small { display: block; color: var(--dim); font-size: 8px; letter-spacing: .13em; text-transform: uppercase; }
 .signal-strip strong { display: block; margin-top: 10px; color: var(--acid); font: 23px var(--display); text-transform: uppercase; }
 
+.showcase { padding-bottom: 0; }
+.panel-shot { margin: 0; border: 1px solid var(--line-bright); background: #020604; box-shadow: 12px 12px 0 #00180d; }
+.panel-shot > header { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; min-height: 40px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--panel-strong); }
+.panel-shot > header > span { display: flex; gap: 5px; }
+.panel-shot > header i { width: 7px; height: 7px; background: var(--danger); transform: rotate(45deg); }
+.panel-shot > header i:nth-child(2) { background: var(--amber); }
+.panel-shot > header i:nth-child(3) { background: var(--acid); }
+.panel-shot > header code { color: var(--muted); font-size: 8px; letter-spacing: .1em; }
+.panel-shot > header b { color: var(--amber); font-size: 8px; letter-spacing: .13em; }
+.panel-shot > a { display: block; overflow: hidden; }
+.panel-shot img { display: block; width: 100%; transition: transform .25s ease; }
+.panel-shot > a:hover img { transform: scale(1.008); }
+.panel-shot figcaption { display: flex; justify-content: space-between; gap: 20px; padding: 12px 14px; border-top: 1px solid var(--line); color: var(--dim); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.panel-shot figcaption span:first-child { color: var(--acid); }
+
 .content-section { width: var(--shell); margin: auto; padding: 112px 0; }
 .section-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 420px); gap: 40px; align-items: end; margin-bottom: 46px; }
 .section-head[id] { scroll-margin-top: 104px; }
@@ -378,6 +393,8 @@ img { max-width: 100%; }
   .tunnel-line + .tunnel-line { border-top: 1px solid var(--line); }
   .signal-strip article { min-height: 84px; padding: 16px; }
   .signal-strip strong { font-size: 18px; }
+  .panel-shot > header b { display: none; }
+  .panel-shot figcaption { display: grid; }
   .content-section { padding: 76px 0; }
   .section-head { margin-bottom: 30px; }
   .section-head h2 { font-size: 48px; }

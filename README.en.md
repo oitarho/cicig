@@ -21,6 +21,11 @@
 
 `cicig` turns a clean VPS into a ready-to-use self-hosted VPN service. Instead of managing separate panels, an administrator gets one place for WireGuard and AmneziaWG: create clients, issue configurations, monitor connections, and control access periods.
 
+<p align="center">
+  <a href="assets/panel-preview.png"><img src="assets/panel-preview.png" width="1100" alt="cicig control panel"></a><br>
+  <sub>One WireGuard and AmneziaWG registry — demonstration data</sub>
+</p>
+
 ## Why cicig
 
 | Feature | What the administrator gets |
