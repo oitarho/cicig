@@ -47,7 +47,7 @@ echo "Проверка конфигурации…"
 docker compose config --quiet
 echo "Загрузка контейнеров…"
 docker compose pull caddy
-docker compose build --pull
+COMPOSE_PARALLEL_LIMIT=1 docker compose build --pull
 echo "Пересборка и запуск всей системы…"
 docker compose up -d --build --remove-orphans
 echo "cicig успешно обновлён."
