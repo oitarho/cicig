@@ -1,0 +1,24 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell scripts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+          bash -n install.sh scripts/*.sh
+          shellcheck install.sh scripts/*.sh
+      - name: Validate Compose
+        run: |
+          cp .env.example .env
+          docker compose config --quiet

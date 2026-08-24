@@ -1,0 +1,30 @@
+{
+	email {$LETSENCRYPT_EMAIL}
+	servers {
+		# UDP/443 belongs to AmneziaWG; Caddy serves HTTPS over TCP only.
+		protocols h1 h2
+	}
+}
+
+{$WG_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy wg-easy:51821
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+	}
+}
+
+{$AWG_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy awg-easy:51821
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+	}
+}
+

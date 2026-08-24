@@ -1,0 +1,80 @@
+name: cicig
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      WG_DOMAIN: ${WG_DOMAIN}
+      AWG_DOMAIN: ${AWG_DOMAIN}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [cicig]
+    depends_on:
+      - wg-easy
+      - awg-easy
+
+  wg-easy:
+    # v14 keeps declarative WG_HOST/PASSWORD_HASH support.
+    image: ghcr.io/wg-easy/wg-easy:14
+    restart: unless-stopped
+    environment:
+      LANG: ru
+      WG_HOST: ${WG_DOMAIN}
+      WG_PORT: ${WG_PORT:-51820}
+      PORT: 51821
+      PASSWORD_HASH: ${WG_PASSWORD_HASH}
+      WG_PERSISTENT_KEEPALIVE: 25
+      UI_TRAFFIC_STATS: "true"
+      UI_CHART_TYPE: 2
+    volumes:
+      - wg_data:/etc/wireguard
+    ports:
+      - "${WG_PORT:-51820}:${WG_PORT:-51820}/udp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+    networks: [cicig]
+
+  awg-easy:
+    image: ghcr.io/yokitoki/awg-easy:latest
+    restart: unless-stopped
+    environment:
+      LANG: ru
+      WG_HOST: ${AWG_DOMAIN}
+      WG_PORT: ${AWG_PORT:-443}
+      PORT: 51821
+      PASSWORD_HASH: ${AWG_PASSWORD_HASH}
+      WG_PERSISTENT_KEEPALIVE: 25
+    volumes:
+      - awg_data:/etc/amnezia/amneziawg
+    ports:
+      - "${AWG_PORT:-443}:${AWG_PORT:-443}/udp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.src_valid_mark: "1"
+    networks: [cicig]
+
+networks:
+  cicig:
+
+volumes:
+  wg_data:
+  awg_data:
+  caddy_data:
+  caddy_config:
+
