@@ -1,19 +1,82 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>cicig — панель</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
-<body><header><div class="brand"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt=""><div><strong>cicig</strong><span>VPN control center</span></div></div>
-<form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Выйти</button></form></header>
-<main><h1>VPN-сервисы</h1>
-{% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
-<section class="grid">{% for card in cards %}<article class="card">
-<div class="card-title"><h2>{{ card.title }}</h2><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
-<dl><div><dt>Endpoint</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ</dt><dd>{{ card.status.image }}</dd></div><div><dt>Health</dt><dd>{{ card.status.health }}</dd></div><div><dt>Автообновление</dt><dd>{{ 'включено' if card.auto_update else 'выключено' }}</dd></div></dl>
-{% if card.update.result %}<p class="result">{{ card.update.result }}{% if card.update.updated_at %}<br><small>{{ card.update.updated_at }}</small>{% endif %}</p>{% endif %}
-<div class="actions"><form method="post" action="{{ url_for('update', name=card.name) }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button {% if card.update.running %}disabled{% endif %}>{{ 'Обновляется…' if card.update.running else 'Обновить сейчас' }}</button></form></div>
-</article>{% endfor %}</section>
-<section class="settings"><h2>Автоматическое обновление</h2><p>Панель проверяет новые образы с выбранным интервалом и перезапускает только соответствующий VPN-сервис.</p>
-<form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
-<label class="check"><input type="checkbox" name="wg-easy" {% if settings.auto_update['wg-easy'] %}checked{% endif %}> WireGuard</label>
-<label class="check"><input type="checkbox" name="awg-easy" {% if settings.auto_update['awg-easy'] %}checked{% endif %}> AmneziaWG</label>
-<label>Проверять каждые, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button></form></section>
-</main></body></html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>cicig — управление VPN</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <a class="brand" href="/"><img src="{{ url_for('static', filename='cicig-cat.png') }}" alt=""><div><strong>cicig</strong><span>единая VPN-панель</span></div></a>
+  <nav><a href="#clients">Клиенты</a><a href="#systems">Системы</a><a href="#updates">Обновления</a></nav>
+  <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="ghost">Выйти</button></form>
+</header>
+
+<main>
+  <section class="hero">
+    <div><p class="eyebrow">Панель управления</p><h1>Оба VPN в одном месте</h1><p>Создавайте клиентов, выдавайте конфигурации и следите за сервисами без перехода между разными интерфейсами.</p></div>
+    <div class="metrics"><div><strong>{{ total_clients }}</strong><span>всего клиентов</span></div><div><strong>{{ enabled_clients }}</strong><span>активны</span></div><div><strong>2</strong><span>VPN-сервиса</span></div></div>
+  </section>
+
+  {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}">{{ message }}</div>{% endfor %}
+
+  <section id="clients" class="section-head"><div><p class="eyebrow">Доступы</p><h2>VPN-клиенты</h2></div><button type="button" onclick="document.getElementById('create-client').showModal()">+ Новый клиент</button></section>
+
+  <div class="client-groups">
+  {% for service, items in clients.items() %}
+    <section class="client-group">
+      <div class="group-title"><div><span class="service-icon {{ service }}">{{ 'WG' if service == 'wg-easy' else 'AWG' }}</span><div><h3>{{ 'WireGuard' if service == 'wg-easy' else 'AmneziaWG' }}</h3><p>{{ cards[0].endpoint if service == 'wg-easy' else cards[1].endpoint }}</p></div></div><span>{{ items|length }} клиентов</span></div>
+      {% if items %}
+      <div class="client-list">
+        {% for client in items %}
+        <article class="client-row">
+          <div class="client-main"><span class="dot {{ 'online' if client.enabled else 'off' }}"></span><div><strong>{{ client.name }}</strong><small>{{ client.address }} · {{ 'включён' if client.enabled else 'отключён' }}</small></div></div>
+          <div class="traffic"><span>↓ {{ client.transfer_rx_h }}</span><span>↑ {{ client.transfer_tx_h }}</span></div>
+          <div class="client-actions">
+            <a class="icon-button" href="{{ url_for('client_qr', service=service, client_id=client.id) }}" target="_blank" title="QR-код">QR</a>
+            <a class="icon-button" href="{{ url_for('client_config', service=service, client_id=client.id) }}" title="Скачать конфигурацию">CONF</a>
+            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='disable' if client.enabled else 'enable') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button" title="{{ 'Отключить' if client.enabled else 'Включить' }}">{{ 'OFF' if client.enabled else 'ON' }}</button></form>
+            <form method="post" action="{{ url_for('client_action', service=service, client_id=client.id, action='delete') }}" onsubmit="return confirm('Удалить этого клиента? Его конфигурация перестанет работать.')"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="icon-button danger" title="Удалить">DEL</button></form>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}<div class="empty">Пока нет клиентов. Нажмите «Новый клиент», чтобы создать первый доступ.</div>{% endif %}
+    </section>
+  {% endfor %}
+  </div>
+
+  <section id="systems" class="section-head"><div><p class="eyebrow">Инфраструктура</p><h2>Состояние сервисов</h2></div></section>
+  <section class="grid">
+  {% for card in cards %}
+    <article class="card">
+      <div class="card-title"><div><span class="service-icon {{ card.name }}">{{ 'WG' if card.name == 'wg-easy' else 'AWG' }}</span><h3>{{ card.title }}</h3></div><span class="status {{ 'ok' if card.status.healthy else 'bad' }}">{{ card.status.state }}</span></div>
+      <dl><div><dt>Endpoint</dt><dd>{{ card.endpoint }}</dd></div><div><dt>Образ</dt><dd>{{ card.status.image }}</dd></div><div><dt>Health</dt><dd>{{ card.status.health }}</dd></div></dl>
+      {% if card.update.result %}<p class="result">{{ card.update.result }}{% if card.update.updated_at %}<br><small>{{ card.update.updated_at }}</small>{% endif %}</p>{% endif %}
+      <form method="post" action="{{ url_for('update', name=card.name) }}"><input type="hidden" name="csrf" value="{{ session.csrf }}"><button class="wide" {% if card.update.running %}disabled{% endif %}>{{ 'Обновляется…' if card.update.running else 'Обновить сейчас' }}</button></form>
+    </article>
+  {% endfor %}
+  </section>
+
+  <section id="updates" class="settings"><div><p class="eyebrow">Автоматизация</p><h2>Автоматическое обновление</h2><p>Обновляется только выбранный VPN-сервис. Настройки панели и клиентские данные находятся в постоянных volumes.</p></div>
+    <form method="post" action="{{ url_for('settings') }}"><input type="hidden" name="csrf" value="{{ session.csrf }}">
+      <label class="check"><input type="checkbox" name="wg-easy" {% if settings.auto_update['wg-easy'] %}checked{% endif %}> WireGuard</label>
+      <label class="check"><input type="checkbox" name="awg-easy" {% if settings.auto_update['awg-easy'] %}checked{% endif %}> AmneziaWG</label>
+      <label>Интервал, часов<input type="number" name="interval_hours" min="1" max="720" value="{{ settings.interval_hours }}"></label><button>Сохранить</button>
+    </form>
+  </section>
+</main>
+
+<dialog id="create-client">
+  <form method="post" action="{{ url_for('create_client') }}">
+    <input type="hidden" name="csrf" value="{{ session.csrf }}">
+    <div class="dialog-head"><div><p class="eyebrow">Новый доступ</p><h2>Создать VPN-клиента</h2></div><button type="button" class="close" onclick="this.closest('dialog').close()">×</button></div>
+    <label>VPN-сервис<select name="service" required><option value="wg-easy">WireGuard</option><option value="awg-easy">AmneziaWG</option></select></label>
+    <label>Имя клиента<input name="name" maxlength="64" placeholder="Например: iPhone Адама" required autofocus></label>
+    <p class="hint">После создания скачайте конфигурацию или откройте QR-код в списке клиентов.</p>
+    <button class="wide">Создать клиента</button>
+  </form>
+</dialog>
+</body>
+</html>

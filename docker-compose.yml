@@ -39,7 +39,7 @@ services:
     networks: [cicig]
 
   wg-easy:
-    # v14 keeps declarative WG_HOST/PASSWORD_HASH support.
+    # v14 keeps declarative WG_HOST support for generated client configs.
     image: ghcr.io/wg-easy/wg-easy:14
     restart: unless-stopped
     environment:
@@ -47,7 +47,6 @@ services:
       WG_HOST: ${VPN_DOMAIN}
       WG_PORT: ${WG_PORT:-51820}
       PORT: 51821
-      PASSWORD_HASH: ${WG_PASSWORD_HASH}
       WG_PERSISTENT_KEEPALIVE: 25
       UI_TRAFFIC_STATS: "true"
       UI_CHART_TYPE: 2
@@ -71,7 +70,6 @@ services:
       WG_HOST: ${VPN_DOMAIN}
       WG_PORT: ${AWG_PORT:-443}
       PORT: 51821
-      PASSWORD_HASH: ${AWG_PASSWORD_HASH}
       WG_PERSISTENT_KEEPALIVE: 25
     volumes:
       - awg_data:/etc/amnezia/amneziawg

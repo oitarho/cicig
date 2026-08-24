@@ -10,15 +10,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import bcrypt
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+import requests
+from flask import Flask, Response, flash, redirect, render_template, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 PROJECT_DIR = Path(os.environ.get("CICIG_PROJECT_DIR", "/opt/cicig"))
 DATA_DIR = Path(os.environ.get("CICIG_PANEL_DATA", "/data"))
 SETTINGS_FILE = DATA_DIR / "settings.json"
 SERVICES = {
-    "wg-easy": {"title": "WireGuard", "endpoint": "51820/udp"},
-    "awg-easy": {"title": "AmneziaWG", "endpoint": "443/udp"},
+    "wg-easy": {"title": "WireGuard", "short": "WG", "endpoint": "51820/udp", "api": "http://wg-easy:51821"},
+    "awg-easy": {"title": "AmneziaWG", "short": "AWG", "endpoint": "443/udp", "api": "http://awg-easy:51821"},
 }
 
 app = Flask(__name__)
@@ -72,6 +73,54 @@ def service_status(name: str) -> dict:
     )
     state, image, health = (inspected.stdout.strip().split("|") + ["", "", ""])[:3]
     return {"state": state, "image": image, "health": health, "healthy": state == "running" and health not in {"unhealthy"}}
+
+
+def api_call(service: str, method: str, path: str, **kwargs) -> requests.Response:
+    if service not in SERVICES:
+        raise ValueError("unknown VPN service")
+    response = requests.request(
+        method,
+        f"{SERVICES[service]['api']}/api{path}",
+        timeout=20,
+        **kwargs,
+    )
+    response.raise_for_status()
+    return response
+
+
+def clients_for(service: str) -> list[dict]:
+    try:
+        clients = api_call(service, "GET", "/wireguard/client").json()
+    except (requests.RequestException, ValueError):
+        return []
+    for client in clients:
+        client["service"] = service
+        client["service_title"] = SERVICES[service]["title"]
+        client["service_short"] = SERVICES[service]["short"]
+        client["transfer_rx_h"] = human_bytes(client.get("transferRx"))
+        client["transfer_tx_h"] = human_bytes(client.get("transferTx"))
+    return clients
+
+
+def human_bytes(value) -> str:
+    try:
+        size = float(value or 0)
+    except (TypeError, ValueError):
+        return "0 B"
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if size < 1024 or unit == "TB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} B"
+        size /= 1024
+    return "0 B"
+
+
+def safe_client_id(client_id: str) -> bool:
+    return (
+        bool(client_id)
+        and client_id not in {"__proto__", "constructor", "prototype"}
+        and len(client_id) <= 128
+        and all(c.isalnum() or c in "-_" for c in client_id)
+    )
 
 
 def perform_update(name: str) -> None:
@@ -166,7 +215,86 @@ def index():
             "auto_update": bool(settings["auto_update"].get(name)),
             "update": update_state[name].copy(),
         })
-    return render_template("index.html", cards=cards, settings=settings)
+    clients = {name: clients_for(name) for name in SERVICES}
+    total_clients = sum(len(items) for items in clients.values())
+    enabled_clients = sum(1 for items in clients.values() for client in items if client.get("enabled"))
+    return render_template(
+        "index.html", cards=cards, clients=clients, settings=settings,
+        total_clients=total_clients, enabled_clients=enabled_clients,
+    )
+
+
+@app.post("/clients")
+def create_client():
+    denied = require_login()
+    if denied:
+        return denied
+    if not valid_csrf():
+        return "Bad CSRF token", 400
+    service = request.form.get("service", "")
+    name = request.form.get("name", "").strip()
+    if service not in SERVICES or not name or len(name) > 64:
+        flash("Проверьте VPN и имя клиента", "error")
+        return redirect(url_for("index") + "#clients")
+    payload = {"name": name}
+    if service == "awg-easy" and request.form.get("expired_date"):
+        payload["expiredDate"] = request.form["expired_date"]
+    try:
+        api_call(service, "POST", "/wireguard/client", json=payload)
+        flash(f"Клиент «{name}» создан в {SERVICES[service]['title']}", "success")
+    except requests.RequestException as exc:
+        flash(f"Не удалось создать клиента: {exc}", "error")
+    return redirect(url_for("index") + "#clients")
+
+
+@app.post("/clients/<service>/<client_id>/<action>")
+def client_action(service: str, client_id: str, action: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if not valid_csrf() or service not in SERVICES or not safe_client_id(client_id):
+        return "Bad request", 400
+    try:
+        if action in {"enable", "disable"}:
+            api_call(service, "POST", f"/wireguard/client/{client_id}/{action}")
+            flash("Состояние клиента изменено", "success")
+        elif action == "delete":
+            api_call(service, "DELETE", f"/wireguard/client/{client_id}")
+            flash("Клиент удалён", "success")
+        else:
+            return "Unknown action", 404
+    except requests.RequestException as exc:
+        flash(f"Операция не выполнена: {exc}", "error")
+    return redirect(url_for("index") + "#clients")
+
+
+@app.get("/clients/<service>/<client_id>/config")
+def client_config(service: str, client_id: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if service not in SERVICES or not safe_client_id(client_id):
+        return "Bad request", 400
+    try:
+        upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/configuration")
+    except requests.RequestException as exc:
+        return f"Configuration unavailable: {exc}", 502
+    disposition = upstream.headers.get("Content-Disposition", f'attachment; filename="{client_id}.conf"')
+    return Response(upstream.content, content_type="text/plain", headers={"Content-Disposition": disposition})
+
+
+@app.get("/clients/<service>/<client_id>/qr")
+def client_qr(service: str, client_id: str):
+    denied = require_login()
+    if denied:
+        return denied
+    if service not in SERVICES or not safe_client_id(client_id):
+        return "Bad request", 400
+    try:
+        upstream = api_call(service, "GET", f"/wireguard/client/{client_id}/qrcode.svg")
+    except requests.RequestException as exc:
+        return f"QR unavailable: {exc}", 502
+    return Response(upstream.content, content_type="image/svg+xml")
 
 
 @app.post("/update/<name>")

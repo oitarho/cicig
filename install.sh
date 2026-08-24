@@ -143,9 +143,7 @@ read -r -s -p "Повторите пароль: " admin_password_2 <"$tty"; prin
 install -d -m 700 "$CICIG_DIR"
 curl -fsSL "$ARCHIVE_URL" | tar -xz --strip-components=1 -C "$CICIG_DIR"
 
-wg_hash=$(bcrypt "$admin_password")
-awg_hash=$wg_hash
-panel_hash=$wg_hash
+panel_hash=$(bcrypt "$admin_password")
 panel_secret=$(openssl rand -hex 32)
 unset admin_password admin_password_2
 umask 077
@@ -155,8 +153,6 @@ VPN_DOMAIN=$base_domain
 LETSENCRYPT_EMAIL=$email
 WG_PORT=51820
 AWG_PORT=443
-WG_PASSWORD_HASH=$wg_hash
-AWG_PASSWORD_HASH=$awg_hash
 PANEL_PASSWORD_HASH=$panel_hash
 PANEL_SECRET_KEY=$panel_secret
 EOF
