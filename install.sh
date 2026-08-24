@@ -113,12 +113,16 @@ bcrypt() {
 }
 
 say "${cyan}cicig — WireGuard + AmneziaWG${reset}"
-wg_domain=$(prompt "Домен WireGuard-панели" "wg.example.com")
-awg_domain=$(prompt "Домен AmneziaWG-панели" "wga.example.com")
-email=$(prompt "Email для TLS" "admin@example.com")
-valid_domain "$wg_domain" || die "Некорректный домен: $wg_domain"
-valid_domain "$awg_domain" || die "Некорректный домен: $awg_domain"
-[[ $wg_domain != "$awg_domain" ]] || die "Домены должны отличаться."
+base_domain=$(prompt "Ваш основной домен (например, mydomain.com)")
+base_domain=${base_domain,,}
+base_domain=${base_domain%.}
+valid_domain "$base_domain" || die "Некорректный домен: $base_domain"
+wg_domain="wg.$base_domain"
+awg_domain="wga.$base_domain"
+say "Будут настроены панели:"
+say "  WireGuard:  $wg_domain"
+say "  AmneziaWG: $awg_domain"
+email=$(prompt "Email для TLS" "admin@$base_domain")
 server_ip=$(public_ipv4) || die "Не удалось определить публичный IPv4."
 say "Публичный IPv4 сервера: ${green}$server_ip${reset}"
 

@@ -16,7 +16,7 @@ The installer refuses to modify the server until both DNS A records resolve to i
 curl -fsSL https://raw.githubusercontent.com/oitarho/cicig/main/install.sh | sudo bash
 ```
 
-The script asks for both domains, shows exact DNS records to create, waits for DNS, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
+The script asks only for the base domain (for example, `mydomain.com`) and automatically uses the fixed `wg.mydomain.com` and `wga.mydomain.com` subdomains. It shows the exact DNS records to create, waits for both records, asks for a panel password, installs Docker if needed, and starts the stack under `/opt/cicig`.
 
 ## Requirements
 
